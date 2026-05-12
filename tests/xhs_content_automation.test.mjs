@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  extractGeminiImageData,
+  extractGeminiText,
   extractJsonObject,
   notionPlainText,
   safeSlug,
@@ -20,13 +22,11 @@ test("extractJsonObject reads fenced JSON", () => {
 \`\`\`json
 {"cover_title":"${sampleTitle}","tags":["tag"]}
 \`\`\``;
-
   assert.equal(extractJsonObject(text).cover_title, sampleTitle);
 });
 
 test("extractJsonObject reads plain JSON", () => {
   const text = JSON.stringify({ review_result: pass, risks: [] });
-
   assert.equal(extractJsonObject(text).review_result, pass);
 });
 
@@ -41,4 +41,20 @@ test("notionPlainText supports title, rich_text, select, status, and checkbox", 
 test("safeSlug keeps ASCII, replaces unsupported characters, and never returns blank", () => {
   assert.equal(safeSlug(sampleTitle), "content");
   assert.equal(safeSlug("conversion draft 01!"), "conversion-draft-01");
+});
+
+test("extractGeminiText reads text from Gemini generateContent response", () => {
+  const response = { candidates: [{ content: { parts: [{ text: "{\"ok\":true}" }] } }] };
+  assert.equal(extractGeminiText(response), "{\"ok\":true}");
+});
+
+test("extractGeminiImageData reads camelCase and snake_case inline image data", () => {
+  assert.deepEqual(
+    extractGeminiImageData({ candidates: [{ content: { parts: [{ inlineData: { mimeType: "image/png", data: "abc" } }] } }] }),
+    { mimeType: "image/png", data: "abc" },
+  );
+  assert.deepEqual(
+    extractGeminiImageData({ candidates: [{ content: { parts: [{ inline_data: { mime_type: "image/png", data: "def" } }] } }] }),
+    { mimeType: "image/png", data: "def" },
+  );
 });
