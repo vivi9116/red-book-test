@@ -36,6 +36,17 @@ test("extractJsonObject reads plain JSON", () => {
   assert.equal(extractJsonObject(text).review_result, pass);
 });
 
+test("extractJsonObject repairs raw newlines inside JSON strings", () => {
+  const text = `{
+    "cover_title": "${sampleTitle}",
+    "body": "第一行
+第二行",
+    "tags": ["tag"]
+  }`;
+
+  assert.equal(extractJsonObject(text).body, "第一行\n第二行");
+});
+
 test("notionPlainText supports title, rich_text, select, status, and checkbox", () => {
   assert.equal(notionPlainText({ title: [{ plain_text: sampleTest }] }), sampleTest);
   assert.equal(notionPlainText({ rich_text: [{ plain_text: samplePain }] }), samplePain);

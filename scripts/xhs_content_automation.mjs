@@ -68,8 +68,58 @@ export function extractJsonObject(text) {
     if (start === -1 || end === -1 || end <= start) {
       throw new Error(`No JSON object found in model output: ${candidate.slice(0, 300)}`);
     }
-    return JSON.parse(candidate.slice(start, end + 1));
+    const objectText = candidate.slice(start, end + 1);
+    try {
+      return JSON.parse(objectText);
+    } catch {
+      return JSON.parse(escapeControlCharactersInJsonStrings(objectText));
+    }
   }
+}
+
+export function escapeControlCharactersInJsonStrings(text) {
+  let result = "";
+  let inString = false;
+  let escaped = false;
+
+  for (const char of text) {
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      result += char;
+      escaped = inString;
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = !inString;
+      result += char;
+      continue;
+    }
+
+    if (inString && char === "\n") {
+      result += "\\n";
+      continue;
+    }
+
+    if (inString && char === "\r") {
+      result += "\\r";
+      continue;
+    }
+
+    if (inString && char === "\t") {
+      result += "\\t";
+      continue;
+    }
+
+    result += char;
+  }
+
+  return result;
 }
 
 export function extractGeminiText(response) {
