@@ -1,0 +1,44 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  extractJsonObject,
+  notionPlainText,
+  safeSlug,
+} from "../scripts/xhs_content_automation.mjs";
+
+const sampleTitle = "\u4f60\u90a3\u4e48\u61c2\u4e8b\uff0c\u4e00\u5b9a\u5f88\u7d2f\u5427\uff1f";
+const sampleTest = "\u8868\u6f14\u578b\u8ba8\u597d\u6d4b\u8bd5";
+const samplePain = "\u5bb3\u6015\u88ab\u8ba8\u538c";
+const sampleType = "\u5171\u9e23\u578b";
+const sampleStatus = "\u4e3b\u63a8";
+const pass = "\u901a\u8fc7";
+
+test("extractJsonObject reads fenced JSON", () => {
+  const text = `Here is the result:
+
+\`\`\`json
+{"cover_title":"${sampleTitle}","tags":["tag"]}
+\`\`\``;
+
+  assert.equal(extractJsonObject(text).cover_title, sampleTitle);
+});
+
+test("extractJsonObject reads plain JSON", () => {
+  const text = JSON.stringify({ review_result: pass, risks: [] });
+
+  assert.equal(extractJsonObject(text).review_result, pass);
+});
+
+test("notionPlainText supports title, rich_text, select, status, and checkbox", () => {
+  assert.equal(notionPlainText({ title: [{ plain_text: sampleTest }] }), sampleTest);
+  assert.equal(notionPlainText({ rich_text: [{ plain_text: samplePain }] }), samplePain);
+  assert.equal(notionPlainText({ select: { name: sampleType } }), sampleType);
+  assert.equal(notionPlainText({ status: { name: sampleStatus } }), sampleStatus);
+  assert.equal(notionPlainText({ checkbox: false }), "false");
+});
+
+test("safeSlug keeps ASCII, replaces unsupported characters, and never returns blank", () => {
+  assert.equal(safeSlug(sampleTitle), "content");
+  assert.equal(safeSlug("conversion draft 01!"), "conversion-draft-01");
+});
