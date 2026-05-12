@@ -2,13 +2,16 @@ name: XHS Content Automation
 
 on:
   schedule:
-    - cron: "0 1 * * *"
+    # 11:00 China Standard Time (UTC+8)
+    - cron: "0 3 * * *"
+    # 21:00 China Standard Time (UTC+8)
+    - cron: "0 13 * * *"
   workflow_dispatch:
     inputs:
       mode:
-        description: "Content mode: both, resonance, or conversion. Use vars for Chinese values if needed."
+        description: "Content mode: auto, both, resonance, or conversion. Auto creates one scheduled post."
         required: false
-        default: "both"
+        default: "auto"
 
 permissions:
   contents: write
@@ -46,7 +49,8 @@ jobs:
           DOUBAO_IMAGE_SIZE: ${{ vars.DOUBAO_IMAGE_SIZE || '1728x2160' }}
           DOUBAO_IMAGE_RESPONSE_FORMAT: ${{ vars.DOUBAO_IMAGE_RESPONSE_FORMAT }}
           XHS_TARGET_TEST_NAME: ${{ vars.XHS_TARGET_TEST_NAME }}
-          XHS_CONTENT_MODE: ${{ github.event.inputs.mode || 'both' }}
+          XHS_CONTENT_MODE: ${{ github.event.inputs.mode || 'auto' }}
+          XHS_EVENT_SCHEDULE: ${{ github.event.schedule }}
         run: npm run generate:xhs
 
       - name: Upload generated images

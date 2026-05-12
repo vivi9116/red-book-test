@@ -12,6 +12,7 @@ import {
   normalizeProvider,
   notionPlainText,
   requestJson,
+  resolveContentTypes,
   safeSlug,
 } from "../scripts/xhs_content_automation.mjs";
 
@@ -67,6 +68,17 @@ test("normalizeProvider trims whitespace and lowercases provider names", () => {
   assert.equal(normalizeProvider("GEMINI ", "doubao"), "gemini");
   assert.equal(normalizeProvider("", "doubao"), "doubao");
   assert.equal(normalizeProvider(undefined, "doubao"), "doubao");
+});
+
+test("resolveContentTypes maps Beijing scheduled runs to one post each", () => {
+  assert.deepEqual(resolveContentTypes("auto", "0 3 * * *"), [sampleType]);
+  assert.deepEqual(resolveContentTypes("auto", "0 13 * * *"), ["\u6d4b\u8bd5\u5f15\u5bfc\u578b"]);
+});
+
+test("resolveContentTypes still supports manual explicit modes", () => {
+  assert.deepEqual(resolveContentTypes("resonance"), [sampleType]);
+  assert.deepEqual(resolveContentTypes("conversion"), ["\u6d4b\u8bd5\u5f15\u5bfc\u578b"]);
+  assert.deepEqual(resolveContentTypes("both"), [sampleType, "\u6d4b\u8bd5\u5f15\u5bfc\u578b"]);
 });
 
 test("contentPrompt asks for senior-sister long copy, hashtags, and no citation markers", () => {

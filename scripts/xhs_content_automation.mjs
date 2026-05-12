@@ -191,6 +191,25 @@ export function normalizeProvider(value, fallback) {
   return String(value || fallback).trim().toLowerCase();
 }
 
+export function resolveContentTypes(rawMode = "auto", eventSchedule = "") {
+  const normalizedMode = String(rawMode || "auto").trim();
+
+  if (normalizedMode === "auto") {
+    const schedule = String(eventSchedule || "").trim();
+    if (schedule === "0 13 * * *") return [ZH.conversion];
+    return [ZH.resonance];
+  }
+
+  const mode =
+    normalizedMode === "resonance"
+      ? ZH.resonance
+      : normalizedMode === "conversion"
+        ? ZH.conversion
+        : normalizedMode;
+
+  return mode === "both" ? CONTENT_TYPES : [mode];
+}
+
 function cleanEnvValue(value, fallback = "") {
   return String(value || fallback).trim();
 }
@@ -718,9 +737,7 @@ async function runOneContentType(testCard, contentType) {
 
 export async function main() {
   const testCard = await getActiveTest();
-  const rawMode = process.env.XHS_CONTENT_MODE || "both";
-  const mode = rawMode === "resonance" ? ZH.resonance : rawMode === "conversion" ? ZH.conversion : rawMode;
-  const types = mode === "both" ? CONTENT_TYPES : [mode];
+  const types = resolveContentTypes(process.env.XHS_CONTENT_MODE, process.env.XHS_EVENT_SCHEDULE);
 
   for (const contentType of types) {
     if (!CONTENT_TYPES.includes(contentType)) {
