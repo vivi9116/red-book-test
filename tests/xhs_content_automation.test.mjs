@@ -128,21 +128,21 @@ test("buildDoubaoImageRequestBody omits response_format unless explicitly reques
   assert.deepEqual(buildDoubaoImageRequestBody("prompt", "ep-test", "1024x1280", ""), {
     model: "ep-test",
     prompt: "prompt",
-    size: "1024x1280",
+    size: "1728x2160",
     watermark: false,
   });
 
   assert.deepEqual(buildDoubaoImageRequestBody("prompt", "ep-test", "1024x1280\r\n", "none"), {
     model: "ep-test",
     prompt: "prompt",
-    size: "1024x1280",
+    size: "1728x2160",
     watermark: false,
   });
 
-  assert.deepEqual(buildDoubaoImageRequestBody("prompt", "ep-test", "1024x1280", "b64_json"), {
+  assert.deepEqual(buildDoubaoImageRequestBody("prompt", "ep-test", "1728x2160", "b64_json"), {
     model: "ep-test",
     prompt: "prompt",
-    size: "1024x1280",
+    size: "1728x2160",
     watermark: false,
     response_format: "b64_json",
   });

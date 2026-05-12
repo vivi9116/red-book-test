@@ -195,6 +195,17 @@ function cleanEnvValue(value, fallback = "") {
   return String(value || fallback).trim();
 }
 
+function normalizeDoubaoImageSize(size) {
+  const cleaned = cleanEnvValue(size, "1728x2160").toLowerCase();
+  const match = cleaned.match(/^(\d+)\s*x\s*(\d+)$/);
+  if (!match) return "1728x2160";
+
+  const width = Number(match[1]);
+  const height = Number(match[2]);
+  if (width * height < 3686400) return "1728x2160";
+  return `${width}x${height}`;
+}
+
 function requiredEnv(name) {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
@@ -344,7 +355,7 @@ export function buildDoubaoImageRequestBody(prompt, model, size, responseFormat)
   const body = {
     model: cleanEnvValue(model),
     prompt,
-    size: cleanEnvValue(size),
+    size: normalizeDoubaoImageSize(size),
     watermark: false,
   };
   const normalizedFormat = cleanEnvValue(responseFormat).toLowerCase();
@@ -357,7 +368,7 @@ export function buildDoubaoImageRequestBody(prompt, model, size, responseFormat)
 async function doubaoGenerateImage(prompt, outputPath) {
   const apiKey = requiredEnv("ARK_API_KEY");
   const model = cleanEnvValue(process.env.DOUBAO_IMAGE_MODEL, "doubao-seedream-4-0-250828");
-  const size = cleanEnvValue(process.env.DOUBAO_IMAGE_SIZE, "1024x1280");
+  const size = cleanEnvValue(process.env.DOUBAO_IMAGE_SIZE, "1728x2160");
   const responseFormat = cleanEnvValue(process.env.DOUBAO_IMAGE_RESPONSE_FORMAT);
 
   const response = await requestJson(`${arkBaseUrl()}/images/generations`, {
