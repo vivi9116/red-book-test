@@ -2,9 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  extractDoubaoText,
+  extractJsonObject,
   extractGeminiImageData,
   extractGeminiText,
-  extractJsonObject,
   notionPlainText,
   safeSlug,
 } from "../scripts/xhs_content_automation.mjs";
@@ -22,11 +23,13 @@ test("extractJsonObject reads fenced JSON", () => {
 \`\`\`json
 {"cover_title":"${sampleTitle}","tags":["tag"]}
 \`\`\``;
+
   assert.equal(extractJsonObject(text).cover_title, sampleTitle);
 });
 
 test("extractJsonObject reads plain JSON", () => {
   const text = JSON.stringify({ review_result: pass, risks: [] });
+
   assert.equal(extractJsonObject(text).review_result, pass);
 });
 
@@ -44,17 +47,45 @@ test("safeSlug keeps ASCII, replaces unsupported characters, and never returns b
 });
 
 test("extractGeminiText reads text from Gemini generateContent response", () => {
-  const response = { candidates: [{ content: { parts: [{ text: "{\"ok\":true}" }] } }] };
+  const response = {
+    candidates: [
+      {
+        content: {
+          parts: [{ text: "{\"ok\":true}" }],
+        },
+      },
+    ],
+  };
+
   assert.equal(extractGeminiText(response), "{\"ok\":true}");
+});
+
+test("extractDoubaoText reads text from Ark OpenAI-compatible chat response", () => {
+  const response = {
+    choices: [
+      {
+        message: {
+          content: "{\"ok\":true}",
+        },
+      },
+    ],
+  };
+
+  assert.equal(extractDoubaoText(response), "{\"ok\":true}");
 });
 
 test("extractGeminiImageData reads camelCase and snake_case inline image data", () => {
   assert.deepEqual(
-    extractGeminiImageData({ candidates: [{ content: { parts: [{ inlineData: { mimeType: "image/png", data: "abc" } }] } }] }),
+    extractGeminiImageData({
+      candidates: [{ content: { parts: [{ inlineData: { mimeType: "image/png", data: "abc" } }] } }],
+    }),
     { mimeType: "image/png", data: "abc" },
   );
+
   assert.deepEqual(
-    extractGeminiImageData({ candidates: [{ content: { parts: [{ inline_data: { mime_type: "image/png", data: "def" } }] } }] }),
+    extractGeminiImageData({
+      candidates: [{ content: { parts: [{ inline_data: { mime_type: "image/png", data: "def" } }] } }],
+    }),
     { mimeType: "image/png", data: "def" },
   );
 });

@@ -18,16 +18,26 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Verify Notion and Gemini secrets
+      - name: Verify Notion, Doubao, and Gemini secrets
         env:
+          ARK_API_KEY: ${{ secrets.ARK_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_TEST_DATABASE_ID: ${{ secrets.NOTION_TEST_DATABASE_ID }}
           NOTION_ANGLE_DATABASE_ID: ${{ secrets.NOTION_ANGLE_DATABASE_ID }}
           NOTION_CONTENT_DATABASE_ID: ${{ secrets.NOTION_CONTENT_DATABASE_ID }}
+          ARK_BASE_URL: ${{ vars.ARK_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3' }}
+          DOUBAO_TEXT_MODEL: ${{ vars.DOUBAO_TEXT_MODEL || 'doubao-seed-1-6-250615' }}
         run: |
           node - <<'NODE'
-          const required = ["GEMINI_API_KEY", "NOTION_TOKEN", "NOTION_TEST_DATABASE_ID", "NOTION_ANGLE_DATABASE_ID", "NOTION_CONTENT_DATABASE_ID"];
+          const required = [
+            "ARK_API_KEY",
+            "GEMINI_API_KEY",
+            "NOTION_TOKEN",
+            "NOTION_TEST_DATABASE_ID",
+            "NOTION_ANGLE_DATABASE_ID",
+            "NOTION_CONTENT_DATABASE_ID",
+          ];
           for (const name of required) {
             if (!process.env[name]) throw new Error(`Missing secret: ${name}`);
           }
@@ -45,13 +55,34 @@ jobs:
             "Notion-Version": "2022-06-28",
           };
 
-          for (const id of [process.env.NOTION_TEST_DATABASE_ID, process.env.NOTION_ANGLE_DATABASE_ID, process.env.NOTION_CONTENT_DATABASE_ID]) {
+          for (const id of [
+            process.env.NOTION_TEST_DATABASE_ID,
+            process.env.NOTION_ANGLE_DATABASE_ID,
+            process.env.NOTION_CONTENT_DATABASE_ID,
+          ]) {
             await request(`https://api.notion.com/v1/databases/${id}/query`, {
               method: "POST",
               headers: notionHeaders,
               body: JSON.stringify({ page_size: 1 }),
             });
           }
+
+          const arkBaseUrl = process.env.ARK_BASE_URL.replace(/\/+$/, "");
+          const doubao = await request(`${arkBaseUrl}/chat/completions`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.ARK_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: process.env.DOUBAO_TEXT_MODEL,
+              messages: [{ role: "user", content: "Return exactly this JSON: {\"ok\":true}" }],
+              max_tokens: 64,
+            }),
+          });
+
+          const doubaoText = doubao.choices?.[0]?.message?.content;
+          if (!doubaoText) throw new Error("Doubao response did not include text");
 
           const gemini = await request(
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
@@ -61,10 +92,14 @@ jobs:
                 "x-goog-api-key": process.env.GEMINI_API_KEY,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ contents: [{ parts: [{ text: "Return exactly this JSON: {\"ok\":true}" }] }] }),
-            }
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: "Return exactly this JSON: {\"ok\":true}" }] }],
+              }),
+            },
           );
+
           const text = gemini.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("");
           if (!text) throw new Error("Gemini response did not include text");
-          console.log("Smoke test passed: secrets, Notion, and Gemini are reachable.");
+
+          console.log("Smoke test passed: secrets, Notion, Doubao, and Gemini are reachable.");
           NODE
