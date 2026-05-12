@@ -137,6 +137,10 @@ export function safeSlug(value) {
   return slug || "content";
 }
 
+export function normalizeProvider(value, fallback) {
+  return String(value || fallback).trim().toLowerCase();
+}
+
 function requiredEnv(name) {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
@@ -318,7 +322,7 @@ async function doubaoGenerateImage(prompt, outputPath) {
 }
 
 async function openAIResponsesJson(prompt) {
-  const provider = (process.env.TEXT_PROVIDER || "gemini").toLowerCase();
+  const provider = normalizeProvider(process.env.TEXT_PROVIDER, "gemini");
   if (provider === "doubao") {
     const response = await doubaoChatCompletion(prompt);
     return extractJsonObject(extractDoubaoText(response));
@@ -331,7 +335,7 @@ async function openAIResponsesJson(prompt) {
 }
 
 async function generateImage(prompt, outputPath) {
-  const provider = (process.env.IMAGE_PROVIDER || "doubao").toLowerCase();
+  const provider = normalizeProvider(process.env.IMAGE_PROVIDER, "doubao");
   if (provider === "doubao") {
     await doubaoGenerateImage(prompt, outputPath);
     return;

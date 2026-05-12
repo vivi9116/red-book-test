@@ -7,6 +7,7 @@ import {
   extractJsonObject,
   extractGeminiImageData,
   extractGeminiText,
+  normalizeProvider,
   notionPlainText,
   requestJson,
   safeSlug,
@@ -46,6 +47,13 @@ test("notionPlainText supports title, rich_text, select, status, and checkbox", 
 test("safeSlug keeps ASCII, replaces unsupported characters, and never returns blank", () => {
   assert.equal(safeSlug(sampleTitle), "content");
   assert.equal(safeSlug("conversion draft 01!"), "conversion-draft-01");
+});
+
+test("normalizeProvider trims whitespace and lowercases provider names", () => {
+  assert.equal(normalizeProvider(" doubao\n", "gemini"), "doubao");
+  assert.equal(normalizeProvider("GEMINI ", "doubao"), "gemini");
+  assert.equal(normalizeProvider("", "doubao"), "doubao");
+  assert.equal(normalizeProvider(undefined, "doubao"), "doubao");
 });
 
 test("extractGeminiText reads text from Gemini generateContent response", () => {
