@@ -1,0 +1,65 @@
+name: XHS Content Automation
+
+on:
+  schedule:
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Content mode: both, resonance, or conversion. Use vars for Chinese values if needed."
+        required: false
+        default: "both"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run tests
+        run: npm test
+
+      - name: Generate XHS content and images
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_TEST_DATABASE_ID: ${{ secrets.NOTION_TEST_DATABASE_ID }}
+          NOTION_ANGLE_DATABASE_ID: ${{ secrets.NOTION_ANGLE_DATABASE_ID }}
+          NOTION_CONTENT_DATABASE_ID: ${{ secrets.NOTION_CONTENT_DATABASE_ID }}
+          OPENAI_TEXT_MODEL: ${{ vars.OPENAI_TEXT_MODEL || 'gpt-5' }}
+          OPENAI_IMAGE_MODEL: ${{ vars.OPENAI_IMAGE_MODEL || 'gpt-image-1.5' }}
+          OPENAI_IMAGE_SIZE: ${{ vars.OPENAI_IMAGE_SIZE || '1024x1536' }}
+          XHS_TARGET_TEST_NAME: ${{ vars.XHS_TARGET_TEST_NAME }}
+          XHS_CONTENT_MODE: ${{ github.event.inputs.mode || 'both' }}
+        run: npm run generate:xhs
+
+      - name: Upload generated images
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-xhs-images
+          path: generated/**/*.png
+          if-no-files-found: ignore
+
+      - name: Commit generated images
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add generated
+          if git diff --cached --quiet; then
+            echo "No generated image changes to commit."
+          else
+            git commit -m "chore: add generated xhs content images"
+            git push
+          fi
