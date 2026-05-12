@@ -1,0 +1,13 @@
+{
+  "name": "xhs-emotion-test-automation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "generate:xhs": "node scripts/xhs_content_automation.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
