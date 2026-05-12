@@ -537,24 +537,39 @@ async function createAnglesIfNeeded(testCard, contentType) {
   return angle;
 }
 
-function contentPrompt(testCard, angle, contentType) {
-  return `You are a Xiaohongshu content strategist for a Chinese female emotion-test account.
+export function contentPrompt(testCard, angle, contentType) {
+  return `You are a Xiaohongshu content strategist and copywriter for a Chinese female emotion-test account.
 
 Generate one single-image Xiaohongshu post. Output JSON only:
 {
   "cover_title": "short Chinese title for the image",
-  "body": "Chinese Xiaohongshu caption",
+  "body": "Chinese Xiaohongshu caption in senior-sister long-copy style",
   "pinned_comment": "Chinese pinned comment",
   "tags": ["Chinese tag"],
   "image_prompt": "Chinese prompt for Doubao Seedream image generation"
 }
 
-Caption structure:
-1. A concrete daily-life scene.
-2. Emotional recognition.
-3. Name the relationship pattern without medical diagnosis.
-4. Leave a curiosity gap.
-5. If content_type is "${ZH.conversion}", naturally guide the user to check the homepage test. If it is "${ZH.resonance}", do not hard sell.
+Body style template:
+- Use 学姐口吻: gentle, intimate, a little late-night, like an older sister who understands her.
+- Length: 700-1100 Chinese characters.
+- Start close to this feeling: "有时候，真的觉得好累啊。那种累，不是干了体力活，而是从心里透出来的无力。"
+- Use 2-4 concrete scenes from the angle/test card, such as refusing requests, reading facial expressions, replaying chat records, saying "好呀，没问题" while exhausted, smiling in the mirror, or feeling strange at night.
+- Use second-person "你", with occasional "学姐想告诉你".
+- Name the pattern lightly: 这可能是一种讨好/寻求认可/害怕被讨厌的关系模式. Do not make it a medical diagnosis.
+- Keep the emotion precise, not preachy. Avoid generic slogans like "你值得被爱" unless the sentence also contains a concrete scene.
+- For "${ZH.conversion}" content, naturally guide to the shop/homepage/left-bottom product entry: "学姐把这份测试/资料包整理好了，就放在店里（见主页/左下角）". Make it feel like a quiet exit, not a hard ad.
+- For "${ZH.resonance}" content, the product mention can be lighter: suggest saving it, or checking the homepage only if she wants to understand her pattern.
+- End with a soft permission sentence, such as allowing herself to be imperfect, to say no, or to rest tonight.
+- Add a final hashtag line inside body with 5-8 hashtags, and also return the same tags in the tags array.
+
+Required tags style:
+- Include tags related to the theme, such as #讨好型人格, #内耗自救, #深夜emo, #自我成长, #情绪价值, #边界感.
+- Do not invent citation markers.
+
+Forbidden:
+- 不要输出 [cite: 1], [citation], source markers, footnotes, or bracketed references.
+- Do not use diagnosis, cure promises, severe mental illness claims, "你一定是", shame, fearmongering, QR codes, or external links.
+- Avoid saying "彻底治愈", "保证改变", "治疗", or implying medical efficacy.
 
 Image style:
 - 4:5 vertical Xiaohongshu cover.
@@ -563,8 +578,6 @@ Image style:
 - One young woman in a specific emotional scene.
 - Clear Chinese cover title area at the top.
 - Gentle, not scary, not medicalized.
-
-Forbidden: diagnosis, cure promises, severe mental illness claims, "you must be", shame, fearmongering.
 
 Test product:
 ${JSON.stringify(testCard, null, 2)}

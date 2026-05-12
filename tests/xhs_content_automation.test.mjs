@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   buildDoubaoImageRequestBody,
+  contentPrompt,
   extractDoubaoText,
   extractDoubaoImageData,
   extractJsonObject,
@@ -66,6 +67,29 @@ test("normalizeProvider trims whitespace and lowercases provider names", () => {
   assert.equal(normalizeProvider("GEMINI ", "doubao"), "gemini");
   assert.equal(normalizeProvider("", "doubao"), "doubao");
   assert.equal(normalizeProvider(undefined, "doubao"), "doubao");
+});
+
+test("contentPrompt asks for senior-sister long copy, hashtags, and no citation markers", () => {
+  const prompt = contentPrompt(
+    {
+      testName: sampleTest,
+      audience: "\u5bb3\u6015\u62d2\u7edd\u522b\u4eba\u7684\u5973\u751f",
+      cta: "\u5e97\u91cc\u6216\u4e3b\u9875\u67e5\u770b",
+    },
+    {
+      angleName: "\u4e0d\u6562\u62d2\u7edd",
+      scene: "\u522b\u4eba\u6c42\u4f60\u5e2e\u5fd9\uff0c\u4f60\u660e\u660e\u5f88\u7d2f\u8fd8\u662f\u7b54\u5e94",
+      question: "\u6211\u5230\u5e95\u662f\u54ea\u4e00\u79cd\u8ba8\u597d",
+    },
+    sampleType,
+  );
+
+  assert.match(prompt, /\u5b66\u59d0\u53e3\u543b/);
+  assert.match(prompt, /\u6709\u65f6\u5019\uff0c\u771f\u7684\u89c9\u5f97\u597d\u7d2f/);
+  assert.match(prompt, /\u5e97\u91cc/);
+  assert.match(prompt, /#\u8ba8\u597d\u578b\u4eba\u683c/);
+  assert.match(prompt, /\[cite/);
+  assert.match(prompt, /\u4e0d\u8981\u8f93\u51fa/);
 });
 
 test("extractGeminiText reads text from Gemini generateContent response", () => {
