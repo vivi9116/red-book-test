@@ -88,6 +88,17 @@ export function extractDoubaoText(response) {
   return text;
 }
 
+export function extractDoubaoImageData(response) {
+  const item = response?.data?.[0];
+  if (item?.b64_json) {
+    return { mimeType: "image/png", data: item.b64_json, url: "" };
+  }
+  if (item?.url) {
+    return { mimeType: "image/png", data: "", url: item.url };
+  }
+  throw new Error("Doubao image response did not include data[0].b64_json or data[0].url");
+}
+
 export function extractGeminiImageData(response) {
   const parts = response?.candidates?.[0]?.content?.parts || [];
   for (const part of parts) {
@@ -242,12 +253,15 @@ async function geminiGenerateContent(model, prompt) {
   });
 }
 
+function arkBaseUrl() {
+  return (process.env.ARK_BASE_URL || "https://ark.cn-beijing.volces.com/api/v3").replace(/\/+$/, "");
+}
+
 async function doubaoChatCompletion(prompt) {
   const apiKey = requiredEnv("ARK_API_KEY");
-  const baseUrl = (process.env.ARK_BASE_URL || "https://ark.cn-beijing.volces.com/api/v3").replace(/\/+$/, "");
   const model = process.env.DOUBAO_TEXT_MODEL || "doubao-seed-1-6-250615";
 
-  return requestJson(`${baseUrl}/chat/completions`, {
+  return requestJson(`${arkBaseUrl()}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -268,6 +282,41 @@ async function doubaoChatCompletion(prompt) {
   });
 }
 
+async function doubaoGenerateImage(prompt, outputPath) {
+  const apiKey = requiredEnv("ARK_API_KEY");
+  const model = process.env.DOUBAO_IMAGE_MODEL || "doubao-seedream-4-0-250828";
+  const size = process.env.DOUBAO_IMAGE_SIZE || "1024x1280";
+  const responseFormat = process.env.DOUBAO_IMAGE_RESPONSE_FORMAT || "b64_json";
+
+  const response = await requestJson(`${arkBaseUrl()}/images/generations`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      prompt,
+      size,
+      response_format: responseFormat,
+      watermark: false,
+    }),
+  });
+
+  const image = extractDoubaoImageData(response);
+  let imageBuffer;
+  if (image.data) {
+    imageBuffer = Buffer.from(image.data, "base64");
+  } else {
+    const imageResponse = await fetch(image.url);
+    if (!imageResponse.ok) throw new Error(`Failed to download Doubao generated image: ${imageResponse.status}`);
+    imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+  }
+
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, imageBuffer);
+}
+
 async function openAIResponsesJson(prompt) {
   const provider = (process.env.TEXT_PROVIDER || "gemini").toLowerCase();
   if (provider === "doubao") {
@@ -282,6 +331,13 @@ async function openAIResponsesJson(prompt) {
 }
 
 async function generateImage(prompt, outputPath) {
+  const provider = (process.env.IMAGE_PROVIDER || "doubao").toLowerCase();
+  if (provider === "doubao") {
+    await doubaoGenerateImage(prompt, outputPath);
+    return;
+  }
+
+  if (provider !== "gemini") throw new Error(`IMAGE_PROVIDER must be "doubao" or "gemini". Got: ${provider}`);
   const model = process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
   const response = await geminiGenerateContent(model, prompt);
   const image = extractGeminiImageData(response);
@@ -413,7 +469,7 @@ Generate one single-image Xiaohongshu post. Output JSON only:
   "body": "Chinese Xiaohongshu caption",
   "pinned_comment": "Chinese pinned comment",
   "tags": ["Chinese tag"],
-  "image_prompt": "Chinese prompt for Gemini image generation"
+  "image_prompt": "Chinese prompt for Doubao Seedream image generation"
 }
 
 Caption structure:
@@ -498,7 +554,7 @@ async function createContentDraft({ testCard, angle, contentType, content, revie
   const databaseId = requiredEnv("NOTION_CONTENT_DATABASE_ID");
   const today = new Date().toISOString().slice(0, 10);
   const title = `${today} ${contentType} ${content.cover_title}`;
-  const imageUrl = githubRawUrl(imagePath.replaceAll("\\", "/"));
+  const imageUrl = imagePath ? githubRawUrl(imagePath.replaceAll("\\", "/")) : "";
   const reviewNotes = [...(review.risks || []), ...(review.revision_suggestions || [])].join("\n");
 
   const properties = {
@@ -544,7 +600,14 @@ async function runOneContentType(testCard, contentType) {
   const imagePath = path.join("generated", today, `${safeSlug(`${contentType}-${content.cover_title}`)}.png`);
 
   await generateImage(content.image_prompt, imagePath);
-  await createContentDraft({ testCard, angle, contentType, content, review, imagePath });
+  await createContentDraft({
+    testCard,
+    angle,
+    contentType,
+    content,
+    review,
+    imagePath,
+  });
   await notionPatchPage(angle.pageId, { [ANGLE.used]: { checkbox: true } });
 
   console.log(`Created ${contentType}: ${content.cover_title}`);

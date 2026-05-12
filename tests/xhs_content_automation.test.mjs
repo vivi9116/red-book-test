@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   extractDoubaoText,
+  extractDoubaoImageData,
   extractJsonObject,
   extractGeminiImageData,
   extractGeminiText,
@@ -73,6 +74,34 @@ test("extractDoubaoText reads text from Ark OpenAI-compatible chat response", ()
   };
 
   assert.equal(extractDoubaoText(response), "{\"ok\":true}");
+});
+
+test("extractDoubaoImageData reads base64 image data from Ark image response", () => {
+  const response = {
+    data: [
+      {
+        b64_json: "abc",
+      },
+    ],
+  };
+
+  assert.deepEqual(extractDoubaoImageData(response), { data: "abc", mimeType: "image/png", url: "" });
+});
+
+test("extractDoubaoImageData reads image URL from Ark image response", () => {
+  const response = {
+    data: [
+      {
+        url: "https://example.test/image.png",
+      },
+    ],
+  };
+
+  assert.deepEqual(extractDoubaoImageData(response), {
+    data: "",
+    mimeType: "image/png",
+    url: "https://example.test/image.png",
+  });
 });
 
 test("extractGeminiImageData reads camelCase and snake_case inline image data", () => {

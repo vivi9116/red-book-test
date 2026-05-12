@@ -18,10 +18,9 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Verify Notion, Doubao, and Gemini secrets
+      - name: Verify Notion and Doubao secrets
         env:
           ARK_API_KEY: ${{ secrets.ARK_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_TEST_DATABASE_ID: ${{ secrets.NOTION_TEST_DATABASE_ID }}
           NOTION_ANGLE_DATABASE_ID: ${{ secrets.NOTION_ANGLE_DATABASE_ID }}
@@ -32,7 +31,6 @@ jobs:
           node - <<'NODE'
           const required = [
             "ARK_API_KEY",
-            "GEMINI_API_KEY",
             "NOTION_TOKEN",
             "NOTION_TEST_DATABASE_ID",
             "NOTION_ANGLE_DATABASE_ID",
@@ -97,22 +95,5 @@ jobs:
           const doubaoText = doubao.choices?.[0]?.message?.content;
           if (!doubaoText) throw new Error("Doubao response did not include text");
 
-          const gemini = await request(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
-            {
-              method: "POST",
-              headers: {
-                "x-goog-api-key": process.env.GEMINI_API_KEY,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: "Return exactly this JSON: {\"ok\":true}" }] }],
-              }),
-            },
-          );
-
-          const text = gemini.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("");
-          if (!text) throw new Error("Gemini response did not include text");
-
-          console.log("Smoke test passed: secrets, Notion, Doubao, and Gemini are reachable.");
+          console.log("Smoke test passed: secrets, Notion, and Doubao text are reachable.");
           NODE
