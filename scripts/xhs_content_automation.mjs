@@ -552,14 +552,24 @@ Generate one single-image Xiaohongshu post. Output JSON only:
 Body style template:
 - Use 学姐口吻: gentle, intimate, a little late-night, like an older sister who understands her.
 - Length: 700-1100 Chinese characters.
-- Start close to this feeling: "有时候，真的觉得好累啊。那种累，不是干了体力活，而是从心里透出来的无力。"
-- Use 2-4 concrete scenes from the angle/test card, such as refusing requests, reading facial expressions, replaying chat records, saying "好呀，没问题" while exhausted, smiling in the mirror, or feeling strange at night.
+- 模仿“学姐”是模仿语气，不是复刻范文。整篇相似度不能超过 90%；不能只替换几个词，不能每篇都用相同叙事顺序、相同开头、相同转折、相同结尾。
+- 先根据 angle.scene 和 angle.question 选择一种变体策略，再写正文。可选变体策略：
+  1. 场景开门：从一个具体动作开始，例如回复消息、接电话、聚会被点名、同事临时甩任务。
+  2. 对话开门：从一句她刚说出口的话开始，例如“好呀，没问题”“我都可以”“不用管我”。
+  3. 身体反应开门：从胃里一紧、手指停在输入框、笑完后突然安静等细节开始。
+  4. 关系反差开门：先写别人眼里的她，再写她自己心里的反应。
+  5. 深夜复盘开门：从翻聊天记录、反复想一句话、躺下后睡不着开始。
+  6. 自问开门：用一个具体问题切入，例如“为什么别人只是沉默了一下，你就开始道歉？”
+- 每次只选一种主线，不要把 6 种都塞进同一篇。第一段必须出现当前 angle 的独有场景、动作或物件。
+- 全文结构也要变化：可以“场景 -> 内心 -> 模式命名 -> 轻 CTA”，也可以“反差 -> 童年经验 -> 当下关系 -> 温柔提醒”，也可以“连续小场景 -> 未完成问题 -> 测试入口”。不要固定成同一套段落模板。
+- 句式要轮换：长短句交替；不要连续使用“你总是/你以为/其实/学姐想告诉你”；不要每篇都写“深夜静下来时”“看着镜子”“允许自己不完美”。
+- Use 2-4 concrete scenes from the angle/test card. Prefer scenes that match the current angle; do not reuse the same scene bundle in every post.
 - Use second-person "你", with occasional "学姐想告诉你".
 - Name the pattern lightly: 这可能是一种讨好/寻求认可/害怕被讨厌的关系模式. Do not make it a medical diagnosis.
 - Keep the emotion precise, not preachy. Avoid generic slogans like "你值得被爱" unless the sentence also contains a concrete scene.
-- For "${ZH.conversion}" content, naturally guide to the shop/homepage/left-bottom product entry: "学姐把这份测试/资料包整理好了，就放在店里（见主页/左下角）". Make it feel like a quiet exit, not a hard ad.
+- For "${ZH.conversion}" content, naturally guide to the shop/homepage/left-bottom product entry. Vary the CTA wording around "店里/主页/左下角"; make it feel like a quiet exit, not a hard ad. Do not use the exact same CTA sentence every time.
 - For "${ZH.resonance}" content, the product mention can be lighter: suggest saving it, or checking the homepage only if she wants to understand her pattern.
-- End with a soft permission sentence, such as allowing herself to be imperfect, to say no, or to rest tonight.
+- End with a soft permission sentence that matches the angle. Vary the ending; do not always end with allowing herself to be imperfect, to say no, or to rest tonight.
 - Add a final hashtag line inside body with 5-8 hashtags, and also return the same tags in the tags array.
 
 Required tags style:
@@ -570,6 +580,7 @@ Forbidden:
 - 不要输出 [cite: 1], [citation], source markers, footnotes, or bracketed references.
 - Do not use diagnosis, cure promises, severe mental illness claims, "你一定是", shame, fearmongering, QR codes, or external links.
 - Avoid saying "彻底治愈", "保证改变", "治疗", or implying medical efficacy.
+- Do not copy the sample article style as a fixed shell. Avoid high-overlap paragraphs, repeated stock openings, repeated scene order, and repeated CTA endings.
 
 Image style:
 - 4:5 vertical Xiaohongshu cover.
@@ -596,7 +607,9 @@ function reviewPrompt(content) {
   "revision_suggestions": []
 }
 
-Reject or suggest changes if it sounds like medical diagnosis, absolute judgment, fearmongering, cure promise, shame, attack, generic fluff, or hard external traffic diversion.
+Reject or suggest changes if it sounds like medical diagnosis, absolute judgment, fearmongering, cure promise, shame, attack, generic fluff, hard external traffic diversion, or a copy-pasted article shell with only a few words changed.
+
+Also reject if the whole post reads more than 90% similar to a fixed template: repeated tiredness opening, repeated "deep night/mirror" middle, repeated permission ending, or repeated shop CTA without adapting to the current angle.
 
 Post:
 ${JSON.stringify(content, null, 2)}`;
