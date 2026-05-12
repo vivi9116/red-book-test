@@ -44,7 +44,7 @@ jobs:
           DOUBAO_TEXT_MODEL: ${{ vars.DOUBAO_TEXT_MODEL || 'doubao-seed-1-6-250615' }}
           DOUBAO_IMAGE_MODEL: ${{ vars.DOUBAO_IMAGE_MODEL || 'doubao-seedream-4-0-250828' }}
           DOUBAO_IMAGE_SIZE: ${{ vars.DOUBAO_IMAGE_SIZE || '1024x1280' }}
-          DOUBAO_IMAGE_RESPONSE_FORMAT: ${{ vars.DOUBAO_IMAGE_RESPONSE_FORMAT || 'b64_json' }}
+          DOUBAO_IMAGE_RESPONSE_FORMAT: ${{ vars.DOUBAO_IMAGE_RESPONSE_FORMAT }}
           XHS_TARGET_TEST_NAME: ${{ vars.XHS_TARGET_TEST_NAME }}
           XHS_CONTENT_MODE: ${{ github.event.inputs.mode || 'both' }}
         run: npm run generate:xhs

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  buildDoubaoImageRequestBody,
   extractDoubaoText,
   extractDoubaoImageData,
   extractJsonObject,
@@ -120,6 +121,30 @@ test("extractDoubaoImageData reads image URL from Ark image response", () => {
     data: "",
     mimeType: "image/png",
     url: "https://example.test/image.png",
+  });
+});
+
+test("buildDoubaoImageRequestBody omits response_format unless explicitly requested", () => {
+  assert.deepEqual(buildDoubaoImageRequestBody("prompt", "ep-test", "1024x1280", ""), {
+    model: "ep-test",
+    prompt: "prompt",
+    size: "1024x1280",
+    watermark: false,
+  });
+
+  assert.deepEqual(buildDoubaoImageRequestBody("prompt", "ep-test", "1024x1280", "none"), {
+    model: "ep-test",
+    prompt: "prompt",
+    size: "1024x1280",
+    watermark: false,
+  });
+
+  assert.deepEqual(buildDoubaoImageRequestBody("prompt", "ep-test", "1024x1280", "b64_json"), {
+    model: "ep-test",
+    prompt: "prompt",
+    size: "1024x1280",
+    watermark: false,
+    response_format: "b64_json",
   });
 });
 

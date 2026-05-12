@@ -336,11 +336,25 @@ async function doubaoChatCompletion(prompt) {
   });
 }
 
+export function buildDoubaoImageRequestBody(prompt, model, size, responseFormat) {
+  const body = {
+    model,
+    prompt,
+    size,
+    watermark: false,
+  };
+  const normalizedFormat = String(responseFormat || "").trim().toLowerCase();
+  if (normalizedFormat && !["default", "none", "omit"].includes(normalizedFormat)) {
+    body.response_format = normalizedFormat;
+  }
+  return body;
+}
+
 async function doubaoGenerateImage(prompt, outputPath) {
   const apiKey = requiredEnv("ARK_API_KEY");
   const model = process.env.DOUBAO_IMAGE_MODEL || "doubao-seedream-4-0-250828";
   const size = process.env.DOUBAO_IMAGE_SIZE || "1024x1280";
-  const responseFormat = process.env.DOUBAO_IMAGE_RESPONSE_FORMAT || "b64_json";
+  const responseFormat = process.env.DOUBAO_IMAGE_RESPONSE_FORMAT || "";
 
   const response = await requestJson(`${arkBaseUrl()}/images/generations`, {
     method: "POST",
@@ -348,13 +362,7 @@ async function doubaoGenerateImage(prompt, outputPath) {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model,
-      prompt,
-      size,
-      response_format: responseFormat,
-      watermark: false,
-    }),
+    body: JSON.stringify(buildDoubaoImageRequestBody(prompt, model, size, responseFormat)),
   });
 
   const image = extractDoubaoImageData(response);

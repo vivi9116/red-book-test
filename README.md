@@ -27,7 +27,7 @@ ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
 DOUBAO_TEXT_MODEL=<your text model or ep- endpoint>
 DOUBAO_IMAGE_MODEL=doubao-seedream-4-0-250828
 DOUBAO_IMAGE_SIZE=1024x1280
-DOUBAO_IMAGE_RESPONSE_FORMAT=b64_json
+DOUBAO_IMAGE_RESPONSE_FORMAT=<optional; leave empty for endpoint defaults>
 XHS_TARGET_TEST_NAME=<optional exact Notion test name>
 ```
 
