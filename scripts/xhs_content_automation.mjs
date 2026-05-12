@@ -1,0 +1,91 @@
+import { Buffer } from "node:buffer";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+
+const NOTION_VERSION = "2022-06-28";
+const ZH = {
+  resonance: "\u5171\u9e23\u578b",
+  conversion: "\u6d4b\u8bd5\u5f15\u5bfc\u578b",
+  pass: "\u901a\u8fc7",
+  active: "\u4e3b\u63a8",
+};
+const TYPES = [ZH.resonance, ZH.conversion];
+const TEST = {
+  name: "\u6d4b\u8bd5\u540d\u79f0", status: "\u4e3b\u63a8\u72b6\u6001", audience: "\u76ee\u6807\u7528\u6237", pain: "\u6838\u5fc3\u75db\u70b9",
+  scenes: "\u5178\u578b\u573a\u666f", fear: "\u7528\u6237\u6700\u6015\u627f\u8ba4", wanted: "\u7528\u6237\u6700\u60f3\u542c\u5230",
+  modules: "\u62a5\u544a\u6a21\u5757", sellingPoints: "\u6d4b\u8bd5\u5356\u70b9", banned: "\u7981\u7528\u8868\u8fbe",
+  visual: "\u89c6\u89c9\u98ce\u683c", cta: "\u4e3b\u9875\u5f15\u5bfc\u8bdd\u672f", backend: "\u540e\u7aef\u4ea7\u54c1",
+};
+const ANGLE = { name: "\u89d2\u5ea6\u540d\u79f0", test: "\u5bf9\u5e94\u6d4b\u8bd5", type: "\u5185\u5bb9\u7c7b\u578b", scene: "\u5177\u4f53\u573a\u666f", emotions: "\u60c5\u7eea\u5173\u952e\u8bcd", question: "\u60ac\u5ff5\u95ee\u9898", cover: "\u5c01\u9762\u6807\u9898", used: "\u662f\u5426\u5df2\u4f7f\u7528" };
+const CONTENT = { title: "\u5185\u5bb9\u6807\u9898", publishDate: "\u53d1\u5e03\u65e5\u671f", test: "\u5bf9\u5e94\u6d4b\u8bd5", angle: "\u5bf9\u5e94\u89d2\u5ea6", type: "\u5185\u5bb9\u7c7b\u578b", cover: "\u5c01\u9762\u6807\u9898", body: "\u6b63\u6587\u6587\u6848", pinned: "\u7f6e\u9876\u8bc4\u8bba", tags: "\u6807\u7b7e", imagePrompt: "\u56fe\u7247\u63d0\u793a\u8bcd", reviewResult: "\u5ba1\u6838\u7ed3\u679c", reviewNotes: "\u5ba1\u6838\u610f\u89c1", status: "\u72b6\u6001" };
+
+export function extractJsonObject(text) {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fenced ? fenced[1].trim() : text.trim();
+  try { return JSON.parse(candidate); } catch {
+    const start = candidate.indexOf("{");
+    const end = candidate.lastIndexOf("}");
+    if (start === -1 || end <= start) throw new Error(`No JSON object found in model output: ${candidate.slice(0, 300)}`);
+    return JSON.parse(candidate.slice(start, end + 1));
+  }
+}
+export function notionPlainText(p) {
+  if (!p) return "";
+  if (p.title) return p.title.map((x) => x.plain_text ?? "").join("");
+  if (p.rich_text) return p.rich_text.map((x) => x.plain_text ?? "").join("");
+  if (p.select) return p.select?.name ?? "";
+  if (p.status) return p.status?.name ?? "";
+  if (p.checkbox !== undefined) return String(p.checkbox);
+  if (p.multi_select) return p.multi_select.map((x) => x.name).join(", ");
+  if (p.date) return p.date?.start ?? "";
+  if (p.number !== undefined) return String(p.number ?? "");
+  return "";
+}
+export function safeSlug(value) {
+  const slug = String(value).toLowerCase().normalize("NFKD").replace(/[^\w\s-]/g, "").replace(/[\s_]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  return slug || "content";
+}
+function env(name) { const v = process.env[name]; if (!v) throw new Error(`Missing required environment variable: ${name}`); return v; }
+function rt(v) { return { rich_text: [{ text: { content: String(v ?? "").slice(0, 1900) } }] }; }
+function tt(v) { return { title: [{ text: { content: String(v ?? "").slice(0, 1900) } }] }; }
+function sel(v) { return { select: { name: v } }; }
+function stat(v) { return { status: { name: v } }; }
+function rel(id) { return id ? { relation: [{ id }] } : undefined; }
+function ms(values) { return { multi_select: [...new Set((values || []).filter(Boolean))].slice(0, 12).map((name) => ({ name })) }; }
+function date(v) { return { date: { start: v } }; }
+async function json(url, options) { const r = await fetch(url, options); const t = await r.text(); if (!r.ok) throw new Error(`Request failed ${r.status}: ${t}`); return t ? JSON.parse(t) : {}; }
+function notionHeaders() { return { Authorization: `Bearer ${env("NOTION_TOKEN")}`, "Content-Type": "application/json", "Notion-Version": NOTION_VERSION }; }
+async function queryDb(id) { return json(`https://api.notion.com/v1/databases/${id}/query`, { method: "POST", headers: notionHeaders(), body: "{}" }); }
+async function createPage(databaseId, properties, children = []) { return json("https://api.notion.com/v1/pages", { method: "POST", headers: notionHeaders(), body: JSON.stringify({ parent: { database_id: databaseId }, properties, children }) }); }
+async function patchPage(pageId, properties) { return json(`https://api.notion.com/v1/pages/${pageId}`, { method: "PATCH", headers: notionHeaders(), body: JSON.stringify({ properties }) }); }
+async function aiJson(prompt) {
+  const r = await json("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${env("OPENAI_API_KEY")}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: process.env.OPENAI_TEXT_MODEL || "gpt-5", input: prompt }) });
+  const out = r.output_text || (r.output || []).flatMap((i) => i.content || []).map((c) => c.text || "").join("\n");
+  return extractJsonObject(out);
+}
+async function image(prompt, outputPath) {
+  const r = await json("https://api.openai.com/v1/images/generations", { method: "POST", headers: { Authorization: `Bearer ${env("OPENAI_API_KEY")}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-1.5", prompt, size: process.env.OPENAI_IMAGE_SIZE || "1024x1536" }) });
+  const item = r.data?.[0];
+  if (!item) throw new Error("Image response did not include data[0]");
+  let buf;
+  if (item.b64_json) buf = Buffer.from(item.b64_json, "base64");
+  else if (item.url) { const img = await fetch(item.url); if (!img.ok) throw new Error(`Image download failed: ${img.status}`); buf = Buffer.from(await img.arrayBuffer()); }
+  else throw new Error("Image response did not include b64_json or url");
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, buf);
+}
+function testCard(page) { const p = page.properties || {}; return { pageId: page.id, testName: notionPlainText(p[TEST.name]), status: notionPlainText(p[TEST.status]), audience: notionPlainText(p[TEST.audience]), pain: notionPlainText(p[TEST.pain]), scenes: notionPlainText(p[TEST.scenes]), fear: notionPlainText(p[TEST.fear]), wanted: notionPlainText(p[TEST.wanted]), modules: notionPlainText(p[TEST.modules]), sellingPoints: notionPlainText(p[TEST.sellingPoints]), banned: notionPlainText(p[TEST.banned]), visual: notionPlainText(p[TEST.visual]), cta: notionPlainText(p[TEST.cta]), backend: notionPlainText(p[TEST.backend]) }; }
+function angleCard(page) { const p = page.properties || {}; return { pageId: page.id, angleName: notionPlainText(p[ANGLE.name]), contentType: notionPlainText(p[ANGLE.type]), scene: notionPlainText(p[ANGLE.scene]), emotions: notionPlainText(p[ANGLE.emotions]), question: notionPlainText(p[ANGLE.question]), coverTitle: notionPlainText(p[ANGLE.cover]), used: notionPlainText(p[ANGLE.used]) === "true" }; }
+async function activeTest() { const r = await queryDb(env("NOTION_TEST_DATABASE_ID")); if (!r.results?.length) throw new Error("The Notion test database is empty."); const target = process.env.XHS_TARGET_TEST_NAME; const found = target ? r.results.find((p) => notionPlainText(p.properties?.[TEST.name]) === target) : r.results.find((p) => [ZH.active, "In progress", "Done"].includes(notionPlainText(p.properties?.[TEST.status]))); if (target && !found) throw new Error(`XHS_TARGET_TEST_NAME was not found: ${target}`); return testCard(found || r.results[0]); }
+async function unusedAngle(type) { const r = await queryDb(env("NOTION_ANGLE_DATABASE_ID")); return (r.results || []).map(angleCard).find((a) => a.contentType === type && !a.used) || null; }
+function anglePrompt(card) { return `You are a Xiaohongshu content strategist for a Chinese female emotion-test account. Create 30 single-image content angles. Output JSON only: {"angles":[{"angle_name":"Chinese angle name","content_type":"${ZH.resonance}","scene":"specific Chinese daily-life scene","emotion_keywords":["Chinese keyword"],"open_question":"Chinese curiosity gap","cover_title":"short Chinese cover title"}]}. Create 15 items with content_type "${ZH.resonance}" and 15 with "${ZH.conversion}". Make every scene concrete. Avoid diagnosis, cure promises, shame, fearmongering, and generic self-love talk. Test product: ${JSON.stringify(card)}`; }
+async function angleOrCreate(card, type) { const existing = await unusedAngle(type); if (existing) return existing; const generated = await aiJson(anglePrompt(card)); for (const a of generated.angles || []) await createPage(env("NOTION_ANGLE_DATABASE_ID"), { [ANGLE.name]: tt(a.angle_name), [ANGLE.test]: rel(card.pageId), [ANGLE.type]: sel(a.content_type), [ANGLE.scene]: rt(a.scene), [ANGLE.emotions]: ms(a.emotion_keywords), [ANGLE.question]: rt(a.open_question), [ANGLE.cover]: rt(a.cover_title), [ANGLE.used]: { checkbox: false } }); const created = await unusedAngle(type); if (!created) throw new Error(`Could not find or generate an unused angle for ${type}`); return created; }
+function contentPrompt(card, angle, type) { return `Generate one single-image Xiaohongshu post for a Chinese female emotion-test account. Output JSON only: {"cover_title":"short Chinese title for the image","body":"Chinese Xiaohongshu caption","pinned_comment":"Chinese pinned comment","tags":["Chinese tag"],"image_prompt":"Chinese prompt for OpenAI image generation"}. Caption: concrete scene, emotional recognition, name relationship pattern without diagnosis, leave curiosity gap, and if type is "${ZH.conversion}" guide to homepage test naturally. Image: 4:5 vertical Xiaohongshu cover, low-saturation watercolor picture-book style, soft pink-white and blue-gray palette, one young woman in a specific emotional scene, clear Chinese title area at top. Avoid diagnosis, cure promises, shame, fearmongering. Test: ${JSON.stringify(card)} Angle: ${JSON.stringify(angle)} Content type: ${type}`; }
+function reviewPrompt(content) { return `Review this Xiaohongshu emotion-test post for safety. Output JSON only: {"review_result":"${ZH.pass}","risks":[],"revision_suggestions":[]}. Reject or suggest changes for diagnosis, absolute judgment, fearmongering, cure promise, shame, generic fluff, or hard diversion. Post: ${JSON.stringify(content)}`; }
+async function reviewedContent(card, angle, type) { let content = await aiJson(contentPrompt(card, angle, type)); let review = await aiJson(reviewPrompt(content)); if (review.review_result !== ZH.pass) { content = await aiJson(`Rewrite the post according to this review. Output same JSON only. Original: ${JSON.stringify(content)} Review: ${JSON.stringify(review)}`); review = await aiJson(reviewPrompt(content)); } return { content, review }; }
+function block(type, text) { return { object: "block", type, [type]: { rich_text: [{ type: "text", text: { content: String(text ?? "").slice(0, 1900) } }] } }; }
+function rawUrl(p) { return process.env.GITHUB_REPOSITORY ? `https://raw.githubusercontent.com/${process.env.GITHUB_REPOSITORY}/${process.env.GITHUB_REF_NAME || "main"}/${p.split("/").map(encodeURIComponent).join("/")}` : p; }
+async function createDraft({ card, angle, type, content, review, imagePath }) { const today = new Date().toISOString().slice(0, 10); const notes = [...(review.risks || []), ...(review.revision_suggestions || [])].join("\n"); return createPage(env("NOTION_CONTENT_DATABASE_ID"), { [CONTENT.title]: tt(`${today} ${type} ${content.cover_title}`), [CONTENT.publishDate]: date(today), [CONTENT.test]: rel(card.pageId), [CONTENT.angle]: rel(angle.pageId), [CONTENT.type]: sel(type), [CONTENT.cover]: rt(content.cover_title), [CONTENT.body]: rt(content.body), [CONTENT.pinned]: rt(content.pinned_comment), [CONTENT.tags]: ms(content.tags), [CONTENT.imagePrompt]: rt(content.image_prompt), [CONTENT.reviewResult]: sel(review.review_result || ZH.pass), [CONTENT.reviewNotes]: rt(notes), [CONTENT.status]: stat(review.review_result === ZH.pass ? "In progress" : "Not started") }, [block("heading_2", "Cover title"), block("paragraph", content.cover_title), block("heading_2", "Caption"), block("paragraph", content.body), block("heading_2", "Pinned comment"), block("paragraph", content.pinned_comment), block("heading_2", "Tags"), block("paragraph", (content.tags || []).map((t) => `#${t}`).join(" ")), block("heading_2", "Image"), block("paragraph", rawUrl(imagePath.replaceAll("\\", "/"))), block("heading_2", "Review"), block("paragraph", `${review.review_result}\n${notes}`)]); }
+async function runType(card, type) { const angle = await angleOrCreate(card, type); const { content, review } = await reviewedContent(card, angle, type); const today = new Date().toISOString().slice(0, 10); const imagePath = path.join("generated", today, `${safeSlug(`${type}-${content.cover_title}`)}.png`); await image(content.image_prompt, imagePath); await createDraft({ card, angle, type, content, review, imagePath }); await patchPage(angle.pageId, { [ANGLE.used]: { checkbox: true } }); console.log(`Created ${type}: ${content.cover_title}`); }
+export async function main() { const card = await activeTest(); const raw = process.env.XHS_CONTENT_MODE || "both"; const mode = raw === "resonance" ? ZH.resonance : raw === "conversion" ? ZH.conversion : raw; const types = mode === "both" ? TYPES : [mode]; for (const type of types) { if (!TYPES.includes(type)) throw new Error(`XHS_CONTENT_MODE must be both, resonance, conversion, ${ZH.resonance}, or ${ZH.conversion}. Got: ${type}`); await runType(card, type); } }
+if (import.meta.url === `file://${process.argv[1]}`) main().catch((e) => { console.error(e); process.exitCode = 1; });
