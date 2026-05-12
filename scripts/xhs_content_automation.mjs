@@ -191,6 +191,10 @@ export function normalizeProvider(value, fallback) {
   return String(value || fallback).trim().toLowerCase();
 }
 
+function cleanEnvValue(value, fallback = "") {
+  return String(value || fallback).trim();
+}
+
 function requiredEnv(name) {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
@@ -338,12 +342,12 @@ async function doubaoChatCompletion(prompt) {
 
 export function buildDoubaoImageRequestBody(prompt, model, size, responseFormat) {
   const body = {
-    model,
+    model: cleanEnvValue(model),
     prompt,
-    size,
+    size: cleanEnvValue(size),
     watermark: false,
   };
-  const normalizedFormat = String(responseFormat || "").trim().toLowerCase();
+  const normalizedFormat = cleanEnvValue(responseFormat).toLowerCase();
   if (normalizedFormat && !["default", "none", "omit"].includes(normalizedFormat)) {
     body.response_format = normalizedFormat;
   }
@@ -352,9 +356,9 @@ export function buildDoubaoImageRequestBody(prompt, model, size, responseFormat)
 
 async function doubaoGenerateImage(prompt, outputPath) {
   const apiKey = requiredEnv("ARK_API_KEY");
-  const model = process.env.DOUBAO_IMAGE_MODEL || "doubao-seedream-4-0-250828";
-  const size = process.env.DOUBAO_IMAGE_SIZE || "1024x1280";
-  const responseFormat = process.env.DOUBAO_IMAGE_RESPONSE_FORMAT || "";
+  const model = cleanEnvValue(process.env.DOUBAO_IMAGE_MODEL, "doubao-seedream-4-0-250828");
+  const size = cleanEnvValue(process.env.DOUBAO_IMAGE_SIZE, "1024x1280");
+  const responseFormat = cleanEnvValue(process.env.DOUBAO_IMAGE_RESPONSE_FORMAT);
 
   const response = await requestJson(`${arkBaseUrl()}/images/generations`, {
     method: "POST",

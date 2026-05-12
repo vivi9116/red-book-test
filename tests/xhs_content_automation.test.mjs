@@ -132,7 +132,7 @@ test("buildDoubaoImageRequestBody omits response_format unless explicitly reques
     watermark: false,
   });
 
-  assert.deepEqual(buildDoubaoImageRequestBody("prompt", "ep-test", "1024x1280", "none"), {
+  assert.deepEqual(buildDoubaoImageRequestBody("prompt", "ep-test", "1024x1280\r\n", "none"), {
     model: "ep-test",
     prompt: "prompt",
     size: "1024x1280",
