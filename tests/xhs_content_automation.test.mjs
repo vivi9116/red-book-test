@@ -7,6 +7,7 @@ import {
   extractGeminiImageData,
   extractGeminiText,
   notionPlainText,
+  requestJson,
   safeSlug,
 } from "../scripts/xhs_content_automation.mjs";
 
@@ -88,4 +89,66 @@ test("extractGeminiImageData reads camelCase and snake_case inline image data", 
     }),
     { mimeType: "image/png", data: "def" },
   );
+});
+
+test("requestJson retries transient high-demand responses", async () => {
+  let calls = 0;
+  const slept = [];
+  const result = await requestJson(
+    "https://example.test/transient",
+    {},
+    {
+      maxAttempts: 2,
+      fetchImpl: async () => {
+        calls += 1;
+        if (calls === 1) {
+          return {
+            ok: false,
+            status: 503,
+            statusText: "Service Unavailable",
+            text: async () => "high demand",
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          text: async () => "{\"ok\":true}",
+        };
+      },
+      sleepImpl: async (ms) => slept.push(ms),
+      logImpl: () => {},
+    },
+  );
+
+  assert.deepEqual(result, { ok: true });
+  assert.equal(calls, 2);
+  assert.equal(slept.length, 1);
+});
+
+test("requestJson does not retry non-transient configuration errors", async () => {
+  let calls = 0;
+  await assert.rejects(
+    () =>
+      requestJson(
+        "https://example.test/not-found",
+        {},
+        {
+          maxAttempts: 3,
+          fetchImpl: async () => {
+            calls += 1;
+            return {
+              ok: false,
+              status: 404,
+              statusText: "Not Found",
+              text: async () => "missing",
+            };
+          },
+          sleepImpl: async () => {},
+        },
+      ),
+    /Request failed 404 Not Found: missing/,
+  );
+
+  assert.equal(calls, 1);
 });

@@ -42,11 +42,24 @@ jobs:
             if (!process.env[name]) throw new Error(`Missing secret: ${name}`);
           }
 
-          async function request(url, options) {
-            const res = await fetch(url, options);
-            const text = await res.text();
-            if (!res.ok) throw new Error(`${url} failed ${res.status}: ${text}`);
-            return text ? JSON.parse(text) : {};
+          const retryableStatusCodes = new Set([429, 500, 502, 503, 504]);
+          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+          async function request(url, options, maxAttempts = 5) {
+            for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+              const res = await fetch(url, options);
+              const text = await res.text();
+              if (res.ok) return text ? JSON.parse(text) : {};
+
+              const canRetry = retryableStatusCodes.has(res.status) && attempt < maxAttempts - 1;
+              if (!canRetry) throw new Error(`${url} failed ${res.status}: ${text}`);
+
+              const delay = Math.min(1000 * 2 ** attempt, 10000);
+              console.warn(`${url} failed ${res.status}; retrying in ${delay}ms`);
+              await sleep(delay);
+            }
+
+            throw new Error(`${url} failed after ${maxAttempts} attempts`);
           }
 
           const notionHeaders = {

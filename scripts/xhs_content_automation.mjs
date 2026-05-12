@@ -168,11 +168,36 @@ function notionHeaders(token) {
   };
 }
 
-async function requestJson(url, options) {
-  const response = await fetch(url, options);
-  const text = await response.text();
-  if (!response.ok) throw new Error(`Request failed ${response.status} ${response.statusText}: ${text}`);
-  return text ? JSON.parse(text) : {};
+const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function retryDelayMs(attempt) {
+  return Math.min(1000 * 2 ** attempt, 10000);
+}
+
+export async function requestJson(url, options, settings = {}) {
+  const maxAttempts = settings.maxAttempts ?? 5;
+  const fetchImpl = settings.fetchImpl ?? fetch;
+  const sleepImpl = settings.sleepImpl ?? sleep;
+  const logImpl = settings.logImpl ?? console.warn;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const response = await fetchImpl(url, options);
+    const text = await response.text();
+    if (response.ok) return text ? JSON.parse(text) : {};
+
+    const canRetry = RETRYABLE_STATUS_CODES.has(response.status) && attempt < maxAttempts - 1;
+    if (!canRetry) throw new Error(`Request failed ${response.status} ${response.statusText}: ${text}`);
+
+    const delay = retryDelayMs(attempt);
+    logImpl(`Transient request failure ${response.status}; retrying in ${delay}ms: ${url}`);
+    await sleepImpl(delay);
+  }
+
+  throw new Error(`Request failed after ${maxAttempts} attempts: ${url}`);
 }
 
 async function notionQueryDatabase(databaseId, body = {}) {
