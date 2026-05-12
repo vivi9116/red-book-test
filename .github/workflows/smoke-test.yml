@@ -18,22 +18,16 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Verify Notion and OpenAI secrets
+      - name: Verify Notion and Gemini secrets
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_TEST_DATABASE_ID: ${{ secrets.NOTION_TEST_DATABASE_ID }}
           NOTION_ANGLE_DATABASE_ID: ${{ secrets.NOTION_ANGLE_DATABASE_ID }}
           NOTION_CONTENT_DATABASE_ID: ${{ secrets.NOTION_CONTENT_DATABASE_ID }}
         run: |
           node - <<'NODE'
-          const required = [
-            "OPENAI_API_KEY",
-            "NOTION_TOKEN",
-            "NOTION_TEST_DATABASE_ID",
-            "NOTION_ANGLE_DATABASE_ID",
-            "NOTION_CONTENT_DATABASE_ID",
-          ];
+          const required = ["GEMINI_API_KEY", "NOTION_TOKEN", "NOTION_TEST_DATABASE_ID", "NOTION_ANGLE_DATABASE_ID", "NOTION_CONTENT_DATABASE_ID"];
           for (const name of required) {
             if (!process.env[name]) throw new Error(`Missing secret: ${name}`);
           }
@@ -51,11 +45,7 @@ jobs:
             "Notion-Version": "2022-06-28",
           };
 
-          for (const id of [
-            process.env.NOTION_TEST_DATABASE_ID,
-            process.env.NOTION_ANGLE_DATABASE_ID,
-            process.env.NOTION_CONTENT_DATABASE_ID,
-          ]) {
+          for (const id of [process.env.NOTION_TEST_DATABASE_ID, process.env.NOTION_ANGLE_DATABASE_ID, process.env.NOTION_CONTENT_DATABASE_ID]) {
             await request(`https://api.notion.com/v1/databases/${id}/query`, {
               method: "POST",
               headers: notionHeaders,
@@ -63,17 +53,18 @@ jobs:
             });
           }
 
-          await request("https://api.openai.com/v1/responses", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "gpt-5-mini",
-              input: "Return exactly this JSON: {\"ok\":true}",
-            }),
-          });
-
-          console.log("Smoke test passed: secrets, Notion, and OpenAI are reachable.");
+          const gemini = await request(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+            {
+              method: "POST",
+              headers: {
+                "x-goog-api-key": process.env.GEMINI_API_KEY,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ contents: [{ parts: [{ text: "Return exactly this JSON: {\"ok\":true}" }] }] }),
+            }
+          );
+          const text = gemini.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("");
+          if (!text) throw new Error("Gemini response did not include text");
+          console.log("Smoke test passed: secrets, Notion, and Gemini are reachable.");
           NODE
