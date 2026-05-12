@@ -61,7 +61,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ -d generated ]; then
-            git add generated
+            git add -f generated
           fi
           if git diff --cached --quiet; then
             echo "No generated image changes to commit."
