@@ -238,15 +238,17 @@ function renderRedeem() {
   app.innerHTML = `
     <div class="screen redeem-screen">
       <div class="redeem-card">
+        <span class="tape tape-rose" aria-hidden="true"></span>
+        <span class="sticker-note">paid test</span>
         <span class="score-pill">付费测试入口</span>
-        <h2>输入兑换码后开始测试</h2>
-        <p class="lead">兑换码仅用于首次进入。兑换成功后，本设备会记住授权，下次重新打开网页也可以继续重复测试。</p>
+        <h2>输入兑换码，开启你的关系地图</h2>
+        <p class="lead">兑换成功后，本设备会记住授权。你可以重新打开网页复测，不需要再次输入兑换码。</p>
         <label class="redeem-field">
           <span>兑换码</span>
           <input id="redeem-code" inputmode="text" autocomplete="one-time-code" placeholder="例如 AB8K-29QD" ${state.redeemLoading ? "disabled" : ""} />
         </label>
         ${state.redeemError ? `<p class="redeem-error">${state.redeemError}</p>` : ""}
-        <button class="primary-btn" data-action="redeem" ${state.redeemLoading ? "disabled" : ""}>${state.redeemLoading ? "正在验证..." : "验证并开始"}</button>
+        <button class="primary-btn" data-action="redeem" ${state.redeemLoading ? "disabled" : ""}>${state.redeemLoading ? "正在验证..." : "验证兑换码"}</button>
       </div>
     </div>
   `;
@@ -257,8 +259,8 @@ function renderIntro() {
     <div class="screen intro">
       <div class="intro-copy">
         <span class="score-pill">完整付费报告体验</span>
-        <h2>看清你是哪一种讨好，而不是只知道“我好像很累”。</h2>
-        <p class="lead">这份测试会从冲突敏感、牺牲承担、情绪照顾、被需要、自责修复、高敏预判六个方向，整理你的关系模式、形成来源和边界练习路径。</p>
+        <h2>你不是只会讨好。你是在用一种方式，保护关系。</h2>
+        <p class="lead">测出你最常重复的讨好模式、形成来源和边界练习起点。</p>
       </div>
       <div class="start-strip">
         <span>约 5 分钟</span>

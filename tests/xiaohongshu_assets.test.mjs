@@ -19,6 +19,23 @@ test("current paid test has a fixed Xiaohongshu asset output folder", async () =
   assert.match(longCopy, /不是给你贴标签/);
 });
 
+test("paid test landing keeps redeem first and uses a refined preview", async () => {
+  const html = await readFile(new URL("../web/index.html", import.meta.url), "utf8");
+  const css = await readFile(new URL("../web/styles.css", import.meta.url), "utf8");
+  const app = await readFile(new URL("../web/app.js", import.meta.url), "utf8");
+
+  assert.ok(html.indexOf("test-panel") < html.indexOf("preview-board"), "redeem/test panel should render before report preview");
+  assert.match(app, /验证兑换码/);
+  assert.match(html, /你最容易讨好的关系/);
+  assert.match(html, /你不敢拒绝的原因/);
+  assert.match(html, /你在关系里牺牲了什么/);
+  assert.match(html, /你的边界练习起点/);
+  assert.match(css, /width:\s*min\(720px,\s*100%\)/);
+  assert.match(css, /sticker-note/);
+  assert.match(css, /deco-heart/);
+  assert.match(css, /tape/);
+});
+
 test("family origin paid test has Xiaohongshu cover and long-copy sources", async () => {
   const readme = await readFile(new URL("README.md", familyAssetRoot), "utf8");
   const coverPrompt = await readFile(new URL("cover-prompt.md", familyAssetRoot), "utf8");

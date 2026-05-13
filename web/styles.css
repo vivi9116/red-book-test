@@ -20,6 +20,7 @@
 }
 
 body {
+  position: relative;
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
@@ -33,6 +34,37 @@ body {
   background-size: 28px 28px, auto, auto, auto;
 }
 
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::before {
+  top: 76px;
+  left: max(18px, calc(50% - 430px));
+  width: 78px;
+  height: 78px;
+  border: 1px dashed rgba(233, 93, 134, 0.2);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 34%, rgba(233, 93, 134, 0.16) 0 9px, transparent 10px),
+    radial-gradient(circle at 64% 62%, rgba(119, 199, 179, 0.18) 0 8px, transparent 9px);
+  transform: rotate(-9deg);
+}
+
+body::after {
+  right: max(16px, calc(50% - 440px));
+  bottom: 78px;
+  width: 112px;
+  height: 34px;
+  border-radius: 8px;
+  background: repeating-linear-gradient(90deg, rgba(233, 93, 134, 0.12) 0 10px, rgba(255, 255, 255, 0.4) 10px 20px);
+  transform: rotate(8deg);
+}
+
 button,
 input {
   font: inherit;
@@ -44,17 +76,54 @@ button {
 }
 
 .app-shell {
-  width: min(980px, 100%);
+  position: relative;
+  width: min(720px, 100%);
   margin: 0 auto;
   padding: 22px 14px 36px;
 }
 
+.app-shell::before,
+.app-shell::after {
+  position: absolute;
+  z-index: 0;
+  color: rgba(233, 93, 134, 0.22);
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.app-shell::before {
+  content: "✦";
+  top: 96px;
+  right: 6px;
+  font-size: 24px;
+  transform: rotate(12deg);
+}
+
+.app-shell::after {
+  content: "♡";
+  top: 136px;
+  left: 2px;
+  font-size: 22px;
+  transform: rotate(-12deg);
+}
+
 .topbar {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
   margin-bottom: 16px;
+}
+
+.deco-heart {
+  position: absolute;
+  right: 72px;
+  top: 4px;
+  color: rgba(233, 93, 134, 0.42);
+  font-size: 24px;
+  transform: rotate(-12deg);
 }
 
 .eyebrow {
@@ -84,6 +153,8 @@ h1 {
 }
 
 .layout {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 14px;
 }
@@ -127,11 +198,12 @@ h1 {
 
 .redeem-screen {
   display: grid;
-  min-height: 480px;
+  min-height: 440px;
   place-items: center;
 }
 
 .redeem-card {
+  position: relative;
   display: grid;
   width: min(100%, 520px);
   gap: 16px;
@@ -142,6 +214,16 @@ h1 {
     linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 245, 249, 0.94)),
     repeating-linear-gradient(-8deg, rgba(105, 167, 223, 0.04) 0 1px, transparent 1px 12px);
   box-shadow: 0 18px 42px rgba(73, 50, 79, 0.12);
+}
+
+.redeem-card::after {
+  content: "♡";
+  position: absolute;
+  right: 22px;
+  bottom: 22px;
+  color: rgba(233, 93, 134, 0.24);
+  font-size: 34px;
+  transform: rotate(12deg);
 }
 
 .redeem-card h2 {
@@ -349,10 +431,35 @@ h1 {
 }
 
 .preview-board {
+  position: relative;
   display: grid;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-top: 14px;
   padding: 12px;
+}
+
+.tape {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  width: 74px;
+  height: 18px;
+  border-radius: 5px;
+  opacity: 0.86;
+  transform: rotate(-5deg);
+  pointer-events: none;
+}
+
+.tape-rose {
+  top: -8px;
+  left: 42px;
+  background: repeating-linear-gradient(90deg, rgba(233, 93, 134, 0.25) 0 12px, rgba(255, 255, 255, 0.42) 12px 22px);
+}
+
+.tape-mint {
+  top: -9px;
+  right: 28px;
+  background: repeating-linear-gradient(90deg, rgba(119, 199, 179, 0.22) 0 11px, rgba(255, 255, 255, 0.45) 11px 21px);
 }
 
 .paper-visual {
@@ -375,6 +482,27 @@ h1 {
   font-family: "Comic Sans MS", cursive;
   font-size: 22px;
   transform: rotate(-8deg);
+}
+
+.sticker-note {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(233, 93, 134, 0.2);
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(233, 93, 134, 0.78);
+  font-size: 12px;
+  font-weight: 900;
+  transform: rotate(-2deg);
+}
+
+.paper-visual .sticker-note {
+  position: absolute;
+  right: 18px;
+  top: 18px;
 }
 
 .pin {
