@@ -19,15 +19,14 @@ test("current paid test has a fixed Xiaohongshu asset output folder", async () =
   assert.match(longCopy, /不是给你贴标签/);
 });
 
-test("paid test landing keeps redeem first and uses a refined preview", async () => {
+test("paid test landing uses redeem for new buyers and intro for stored access", async () => {
   const html = await readFile(new URL("../web/index.html", import.meta.url), "utf8");
   const css = await readFile(new URL("../web/styles.css", import.meta.url), "utf8");
   const app = await readFile(new URL("../web/app.js", import.meta.url), "utf8");
 
   assert.ok(html.indexOf("test-panel") < html.indexOf("preview-board"), "redeem/test panel should render before report preview");
   assert.match(app, /验证兑换码/);
-  assert.match(app, /screen:\s*"redeem"/);
-  assert.doesNotMatch(app, /screen:\s*readStoredAccess\(\)\s*\?/);
+  assert.match(app, /screen:\s*readStoredAccess\(\)\s*\?\s*"intro"\s*:\s*"redeem"/);
   assert.match(html, /你最容易讨好的关系/);
   assert.match(html, /你不敢拒绝的原因/);
   assert.match(html, /你在关系里牺牲了什么/);

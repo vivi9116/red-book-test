@@ -202,7 +202,7 @@ const questions = [
 ];
 
 const state = {
-  screen: "redeem",
+  screen: readStoredAccess() ? "intro" : "redeem",
   index: 0,
   answers: new Map(),
   redeemError: "",
