@@ -26,6 +26,8 @@ test("paid test landing keeps redeem first and uses a refined preview", async ()
 
   assert.ok(html.indexOf("test-panel") < html.indexOf("preview-board"), "redeem/test panel should render before report preview");
   assert.match(app, /验证兑换码/);
+  assert.match(app, /screen:\s*"redeem"/);
+  assert.doesNotMatch(app, /screen:\s*readStoredAccess\(\)\s*\?/);
   assert.match(html, /你最容易讨好的关系/);
   assert.match(html, /你不敢拒绝的原因/);
   assert.match(html, /你在关系里牺牲了什么/);

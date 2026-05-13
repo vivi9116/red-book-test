@@ -202,7 +202,7 @@ const questions = [
 ];
 
 const state = {
-  screen: readStoredAccess() ? "intro" : "redeem",
+  screen: "redeem",
   index: 0,
   answers: new Map(),
   redeemError: "",
@@ -235,6 +235,8 @@ function render() {
 }
 
 function renderRedeem() {
+  const storedAccess = readStoredAccess();
+
   app.innerHTML = `
     <div class="screen redeem-screen">
       <div class="redeem-card">
@@ -242,13 +244,17 @@ function renderRedeem() {
         <span class="sticker-note">paid test</span>
         <span class="score-pill">付费测试入口</span>
         <h2>输入兑换码，开启你的关系地图</h2>
-        <p class="lead">兑换成功后，本设备会记住授权。你可以重新打开网页复测，不需要再次输入兑换码。</p>
+        <p class="lead">${
+          storedAccess
+            ? "本设备已验证过兑换码，可以直接进入测试，也可以稍后重新打开网页复测。"
+            : "兑换成功后，本设备会记住授权。你可以重新打开网页复测，不需要再次输入兑换码。"
+        }</p>
         <label class="redeem-field">
           <span>兑换码</span>
-          <input id="redeem-code" inputmode="text" autocomplete="one-time-code" placeholder="例如 AB8K-29QD" ${state.redeemLoading ? "disabled" : ""} />
+          <input id="redeem-code" inputmode="text" autocomplete="one-time-code" placeholder="例如 AB8K-29QD" ${state.redeemLoading || storedAccess ? "disabled" : ""} />
         </label>
         ${state.redeemError ? `<p class="redeem-error">${state.redeemError}</p>` : ""}
-        <button class="primary-btn" data-action="redeem" ${state.redeemLoading ? "disabled" : ""}>${state.redeemLoading ? "正在验证..." : "验证兑换码"}</button>
+        <button class="primary-btn" data-action="${storedAccess ? "continue" : "redeem"}" ${state.redeemLoading ? "disabled" : ""}>${storedAccess ? "进入测试" : state.redeemLoading ? "正在验证..." : "验证兑换码"}</button>
       </div>
     </div>
   `;
@@ -380,6 +386,11 @@ app.addEventListener("click", async (event) => {
   if (!target) return;
 
   const action = target.dataset.action;
+  if (action === "continue") {
+    state.screen = "intro";
+    render();
+    return;
+  }
   if (action === "redeem") {
     const code = document.querySelector("#redeem-code")?.value;
     state.redeemError = "";
