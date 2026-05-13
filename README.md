@@ -4,6 +4,28 @@ This repository runs a GitHub Actions workflow that generates Xiaohongshu single
 
 The workflow reads the active test from Notion, creates content angles when needed, generates one resonance post and one conversion post, creates an image with Volcengine Ark Seedream, and writes the draft back to Notion.
 
+## Paid test web app
+
+The responsive paid test prototype is in `web/`.
+
+Open `web/index.html` in a browser to try it. It is a static app, so it does not need a backend or build step.
+
+Included modules:
+
+- 36-question paid version of the pleasing-personality test
+- 6 result types
+- Dimension score bars
+- Origin explanation
+- Relationship pattern explanation
+- Change path
+- Mobile, tablet, and desktop responsive layouts
+
+Validation:
+
+```text
+npm run validate:web
+```
+
 ## Required GitHub Secrets
 
 Add these in `Settings -> Secrets and variables -> Actions -> New repository secret`:
@@ -37,6 +59,7 @@ Go to `Actions -> XHS Content Automation -> Run workflow`.
 
 Use mode:
 
+- `auto`
 - `both`
 - `resonance`
 - `conversion`
