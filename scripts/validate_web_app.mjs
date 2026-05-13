@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 const appJs = await readFile(new URL("../web/app.js", import.meta.url), "utf8");
 const html = await readFile(new URL("../web/index.html", import.meta.url), "utf8");
 const css = await readFile(new URL("../web/styles.css", import.meta.url), "utf8");
+const worker = await readFile(new URL("../workers/redeem-worker.js", import.meta.url), "utf8");
 
 const questionCount = (appJs.match(/\bid:\s*\d+/g) || []).length;
 assert.equal(questionCount, 36, "paid test should include 36 questions");
@@ -13,8 +14,14 @@ for (const type of ["conflict", "sacrifice", "emotion", "needed", "selfBlame", "
 }
 
 assert.match(appJs, /function calculateReport/, "missing scoring function");
+assert.match(appJs, /function renderRedeem/, "missing redeem-code gate");
+assert.match(appJs, /function redeemCode/, "missing redeem-code request flow");
+assert.match(appJs, /localStorage/, "redeemed access should persist for the same browser");
+assert.match(appJs, /ACCESS_STORAGE_KEY/, "missing stable local access storage key");
+assert.match(appJs, /XHS_REDEEM_CONFIG/, "missing redeem API configuration hook");
 assert.match(appJs, /function renderQuestion/, "missing question renderer");
 assert.match(html, /viewport/, "missing responsive viewport meta");
+assert.match(html, /<script src="\.\/config\.js"><\/script>\s*<script src="\.\/app\.js" defer><\/script>/, "config script should load before the app");
 assert.match(html, /<script src="\.\/app\.js" defer><\/script>/, "app script should run as a classic deferred script for file:// usage");
 assert.doesNotMatch(html, /type="module"/, "file:// usage should not depend on module scripts");
 assert.match(html, /preview-board/, "relationship map should be redesigned as a top preview board");
@@ -27,5 +34,9 @@ assert.match(appJs, /boundaryPractice/, "report should include more detailed bou
 assert.match(css, /@media \(max-width: 760px\)/, "missing mobile breakpoint");
 assert.match(css, /@media \(min-width: 1024px\)/, "missing desktop breakpoint");
 assert.doesNotMatch(css, /\.side-panel/, "CSS should not keep the old right sidebar layout");
+assert.match(css, /\.redeem-card/, "missing redeem-code screen styling");
+assert.match(worker, /REDEEM_CODES/, "redeem worker should use the REDEEM_CODES KV namespace");
+assert.match(worker, /status:\s*"used"/, "redeem worker should mark codes as used");
+assert.match(worker, /accessToken/, "redeem worker should return an access token");
 
 console.log("Web app validation passed.");

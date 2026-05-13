@@ -125,6 +125,76 @@ h1 {
   gap: 18px;
 }
 
+.redeem-screen {
+  display: grid;
+  min-height: 480px;
+  place-items: center;
+}
+
+.redeem-card {
+  display: grid;
+  width: min(100%, 520px);
+  gap: 16px;
+  border: 1px solid rgba(233, 93, 134, 0.22);
+  border-radius: 8px;
+  padding: 22px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 245, 249, 0.94)),
+    repeating-linear-gradient(-8deg, rgba(105, 167, 223, 0.04) 0 1px, transparent 1px 12px);
+  box-shadow: 0 18px 42px rgba(73, 50, 79, 0.12);
+}
+
+.redeem-card h2 {
+  margin: 0;
+  font-size: clamp(25px, 6vw, 38px);
+  line-height: 1.14;
+  letter-spacing: 0;
+}
+
+.redeem-field {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.redeem-field input {
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 14px;
+  background: white;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0;
+  outline: 0;
+  text-transform: uppercase;
+}
+
+.redeem-field input:focus {
+  border-color: rgba(233, 93, 134, 0.86);
+  box-shadow: 0 0 0 4px rgba(233, 93, 134, 0.12);
+}
+
+.redeem-error {
+  margin: 0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff0f3;
+  color: #bf3159;
+  font-weight: 800;
+}
+
+.redeem-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .intro-copy {
   display: grid;
   gap: 14px;

@@ -1,3 +1,68 @@
+const TEST_ID = "pleasing-personality-depth";
+const ACCESS_STORAGE_KEY = "xhs_paid_test_access_v1";
+const LOCAL_PREVIEW_CODE = "PREVIEW-2026";
+const redeemConfig = window.XHS_REDEEM_CONFIG || {};
+
+function normalizeRedeemCode(code) {
+  return String(code || "").trim().replace(/\s+/g, "").toUpperCase();
+}
+
+function isLocalPreview() {
+  return ["file:", "http:"].includes(window.location.protocol) && ["", "localhost", "127.0.0.1"].includes(window.location.hostname);
+}
+
+function readStoredAccess() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(ACCESS_STORAGE_KEY) || "null");
+    if (stored?.testId === TEST_ID && stored?.accessToken) return stored;
+  } catch {
+    localStorage.removeItem(ACCESS_STORAGE_KEY);
+  }
+  return null;
+}
+
+function storeAccess(access) {
+  localStorage.setItem(
+    ACCESS_STORAGE_KEY,
+    JSON.stringify({
+      testId: TEST_ID,
+      code: access.code || "",
+      accessToken: access.accessToken,
+      redeemedAt: access.redeemedAt || new Date().toISOString(),
+    }),
+  );
+}
+
+async function redeemCode(code) {
+  const normalizedCode = normalizeRedeemCode(code);
+  if (!normalizedCode) throw new Error("请输入兑换码");
+
+  if (isLocalPreview() && normalizedCode === LOCAL_PREVIEW_CODE) {
+    return {
+      ok: true,
+      code: normalizedCode,
+      testId: TEST_ID,
+      accessToken: `preview-${Date.now()}`,
+      redeemedAt: new Date().toISOString(),
+    };
+  }
+
+  if (!redeemConfig.apiUrl) {
+    throw new Error("暂未配置兑换接口。上线后请配置 XHS_REDEEM_CONFIG.apiUrl。");
+  }
+
+  const response = await fetch(redeemConfig.apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code: normalizedCode, testId: TEST_ID }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.ok) {
+    throw new Error(payload.message || "兑换码无效或已被使用");
+  }
+  return { ...payload, code: normalizedCode, testId: TEST_ID };
+}
+
 const resultTypes = [
   {
     key: "conflict",
@@ -137,9 +202,11 @@ const questions = [
 ];
 
 const state = {
-  screen: "intro",
+  screen: readStoredAccess() ? "intro" : "redeem",
   index: 0,
   answers: new Map(),
+  redeemError: "",
+  redeemLoading: false,
 };
 
 const app = document.querySelector("#app");
@@ -161,9 +228,29 @@ function calculateReport() {
 }
 
 function render() {
+  if (state.screen === "redeem") renderRedeem();
   if (state.screen === "intro") renderIntro();
   if (state.screen === "question") renderQuestion();
   if (state.screen === "report") renderReport();
+}
+
+function renderRedeem() {
+  app.innerHTML = `
+    <div class="screen redeem-screen">
+      <div class="redeem-card">
+        <span class="score-pill">付费测试入口</span>
+        <h2>输入兑换码后开始测试</h2>
+        <p class="lead">兑换码仅用于首次进入。兑换成功后，本设备会记住授权，下次重新打开网页也可以继续重复测试。</p>
+        <label class="redeem-field">
+          <span>兑换码</span>
+          <input id="redeem-code" inputmode="text" autocomplete="one-time-code" placeholder="例如 AB8K-29QD" ${state.redeemLoading ? "disabled" : ""} />
+        </label>
+        ${state.redeemError ? `<p class="redeem-error">${state.redeemError}</p>` : ""}
+        <button class="primary-btn" data-action="redeem" ${state.redeemLoading ? "disabled" : ""}>${state.redeemLoading ? "正在验证..." : "验证并开始"}</button>
+        ${isLocalPreview() ? `<p class="redeem-hint">本地预览可输入 ${LOCAL_PREVIEW_CODE}。正式上线请接入后端兑换接口。</p>` : ""}
+      </div>
+    </div>
+  `;
 }
 
 function renderIntro() {
@@ -287,12 +374,35 @@ function renderReport() {
   `;
 }
 
-app.addEventListener("click", (event) => {
+app.addEventListener("click", async (event) => {
   const target = event.target.closest("[data-action]");
   if (!target) return;
 
   const action = target.dataset.action;
+  if (action === "redeem") {
+    const code = document.querySelector("#redeem-code")?.value;
+    state.redeemError = "";
+    state.redeemLoading = true;
+    render();
+    try {
+      const access = await redeemCode(code);
+      storeAccess(access);
+      state.screen = "intro";
+    } catch (error) {
+      state.screen = "redeem";
+      state.redeemError = error.message || "兑换失败，请稍后再试";
+    } finally {
+      state.redeemLoading = false;
+      render();
+    }
+    return;
+  }
   if (action === "start") {
+    if (!readStoredAccess()) {
+      state.screen = "redeem";
+      render();
+      return;
+    }
     state.screen = "question";
     state.index = 0;
   }

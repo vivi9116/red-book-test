@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "generate:xhs": "node scripts/xhs_content_automation.mjs",
-    "validate:web": "node scripts/validate_web_app.mjs"
+    "validate:web": "node scripts/validate_web_app.mjs",
+    "generate:codes": "node scripts/generate_redeem_codes.mjs"
   },
   "engines": {
     "node": ">=20"

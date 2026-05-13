@@ -26,6 +26,38 @@ Validation:
 npm run validate:web
 ```
 
+### One-time redeem codes
+
+The test page now shows a redeem-code screen before the test starts.
+
+- First successful redemption is saved in the user's browser with `localStorage`
+- The same user can reopen the page and test again on the same browser/device
+- A shared code cannot be reused once the backend marks it as used
+- Local preview code: `PREVIEW-2026`
+
+Frontend config:
+
+Copy `web/config.example.js` to `web/config.js`, set your Worker URL, and include it before `app.js` when deploying:
+
+```html
+<script src="./config.js"></script>
+<script src="./app.js" defer></script>
+```
+
+Backend template:
+
+- `workers/redeem-worker.js`
+- Requires a Cloudflare KV namespace named `REDEEM_CODES`
+- KV records should use keys like `code:AB12CD-EF34GH`
+
+Generate codes:
+
+```text
+npm run generate:codes -- 100 pleasing-personality-depth
+```
+
+Each generated JSONL line has a `key` and `value` you can import into KV. Send one unused code to the Xiaohongshu buyer after purchase.
+
 ## Required GitHub Secrets
 
 Add these in `Settings -> Secrets and variables -> Actions -> New repository secret`:
