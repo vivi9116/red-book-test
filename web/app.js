@@ -10,6 +10,10 @@ const resultTypes = [
     pattern:
       "在亲密关系里，你容易把对方的沉默理解成惩罚；在朋友和职场关系里，你会优先压下不满，先把场面维持好。",
     path: ["先分清事实和想象：对方沉默，不等于你做错。", "练习把道歉换成确认：你刚刚沉默，是需要时间还是不舒服？", "冲突出现时，先照顾自己的身体反应，再处理关系。"],
+    relationshipFocus:
+      "你的关系雷区通常不是大吵，而是冷下来的一瞬间。对方语气轻一点、回复慢一点，你的身体可能已经先进入紧张状态。",
+    boundaryPractice:
+      "本周练习只做一件事：当你想立刻道歉时，先写下三种解释。只有其中一种是“我做错了”，另外两种留给对方和情境。",
   },
   {
     key: "sacrifice",
@@ -22,6 +26,10 @@ const resultTypes = [
     pattern:
       "你会在关系里自动补位：别人没说完你就接住，别人开口你就答应。久了以后，你会分不清自己是真的愿意，还是已经习惯了。",
     path: ["每次答应前停 10 秒，问自己：我是真的愿意吗？", "从低风险拒绝开始练习，比如改时间、降范围、只答应一部分。", "把“我不方便”当作完整理由，不急着补偿对方。"],
+    relationshipFocus:
+      "你的消耗常常发生在答应之后。表面上关系很顺，内心却会积累一种“为什么又是我”的疲惫。",
+    boundaryPractice:
+      "本周练习一个半拒绝句式：我今天只能帮到这里。它不会把关系推翻，但会让你重新感受到边界。",
   },
   {
     key: "emotion",
@@ -34,6 +42,10 @@ const resultTypes = [
     pattern:
       "你会把对方的失望、烦躁、疲惫都揽到自己身上。你很会安抚别人，却常常忘了问自己累不累。",
     path: ["把别人的情绪还给别人：我可以关心，但不必负责。", "练习表达事实：我看见你不开心，但我不知道原因。", "在安慰别人之前，先确认自己有没有力气。"],
+    relationshipFocus:
+      "你很容易成为关系里的情绪缓冲垫。别人不开心，你会先检查自己哪里没做好，而不是先确认那是不是你的责任。",
+    boundaryPractice:
+      "本周练习把关心和负责分开：我愿意听你说，但我不能替你解决全部情绪。",
   },
   {
     key: "needed",
@@ -46,6 +58,10 @@ const resultTypes = [
     pattern:
       "你容易被需要感吸引，也容易被消耗型关系困住。别人越依赖你，你越难离开，因为那里面藏着一种被确认的感觉。",
     path: ["区分被爱和被使用：需要你，不等于珍惜你。", "练习在不帮忙的时候，也确认自己的价值。", "留意让你越来越累的关系，而不是只看对方是否需要你。"],
+    relationshipFocus:
+      "你会被“我需要你”这句话打动。它给你一种很强的存在感，但也可能让你忽略自己是否真的被珍惜。",
+    boundaryPractice:
+      "本周练习记录两种价值：我帮了什么，以及我什么都没做时仍然拥有的价值。",
   },
   {
     key: "selfBlame",
@@ -58,6 +74,10 @@ const resultTypes = [
     pattern:
       "在关系冷下来时，你会加倍解释、加倍修复、加倍证明。你以为是在挽回关系，其实也在不断削弱自己的位置。",
     path: ["把责任分成三份：我的、对方的、情境的。", "停止用过度解释换理解，真正愿意理解你的人不需要你证明很多遍。", "当自责出现时，先问：我掌握了全部事实吗？"],
+    relationshipFocus:
+      "你习惯用自责换可控感。只要都是自己的问题，好像就还能修复；但这也会让你承担本不属于你的部分。",
+    boundaryPractice:
+      "本周练习责任切分：每次自责时写下“我的责任、对方的责任、情境的影响”，不允许只写自己。",
   },
   {
     key: "sensitive",
@@ -70,6 +90,10 @@ const resultTypes = [
     pattern:
       "你常常还没确认对方需要什么，就已经开始迎合。你很少真正放松，因为你总在提前处理还没有发生的问题。",
     path: ["把预判改成询问：你需要我做什么吗？", "允许别人直接说需求，不把猜测当任务。", "练习在关系里慢一点，不急着立刻表现得周到。"],
+    relationshipFocus:
+      "你太擅长提前扫描关系风险。你的敏感很珍贵，但当它一直用来预判危险，你会很难真正放松。",
+    boundaryPractice:
+      "本周练习把猜测改成一句确认：我不确定你是不是需要这个，你可以直接告诉我。",
   },
 ];
 
@@ -179,7 +203,7 @@ function renderQuestion() {
         ${question.options
           .map(
             ([label, type], optionIndex) => `
-              <button class="option" data-action="answer" data-type="${type}" aria-pressed="${selected === type}">
+              <button class="option${selected === type ? " selected" : ""}" data-action="answer" data-type="${type}" aria-pressed="${selected === type}">
                 <span class="option-mark">${String.fromCharCode(65 + optionIndex)}</span>
                 <span>${label}</span>
               </button>
@@ -220,6 +244,10 @@ function renderReport() {
           <p>${report.primary.summary}</p>
         </section>
         <section class="report-section">
+          <h3>第二倾向如何影响你</h3>
+          <p>你的第二倾向是「${report.secondary.name}」。主类型解释你最常用的关系求生方式，第二倾向则解释你为什么会在某些场景里突然变得更敏感、更退让，或更想证明自己有价值。</p>
+        </section>
+        <section class="report-section">
           <h3>六维度占比</h3>
           ${dimensions}
         </section>
@@ -232,8 +260,16 @@ function renderReport() {
           <p>${report.primary.pattern}</p>
         </section>
         <section class="report-section">
+          <h3>最容易被触发的关系场景</h3>
+          <p>${report.primary.relationshipFocus}</p>
+        </section>
+        <section class="report-section">
           <h3>如何开始改变</h3>
           <ul>${report.primary.path.map((item) => `<li>${item}</li>`).join("")}</ul>
+        </section>
+        <section class="report-section">
+          <h3>本周边界练习</h3>
+          <p>${report.primary.boundaryPractice}</p>
         </section>
         <section class="report-section">
           <h3>全部类型总览</h3>
@@ -241,7 +277,6 @@ function renderReport() {
             ${report.ranked.map((item) => `<div class="type-chip"><span>${item.name}</span><strong>${item.score}</strong></div>`).join("")}
           </div>
         </section>
-        <div class="locked-note">下一步最适合承接的产品：边界感练习包、7 天拒绝练习、21 天自我价值训练营。报告页可以在这里自然引导复购。</div>
       </div>
 
       <div class="nav-row">
