@@ -7,6 +7,7 @@ const css = await readFile(new URL("../web/styles.css", import.meta.url), "utf8"
 const config = await readFile(new URL("../web/config.js", import.meta.url), "utf8");
 const vercelConfig = await readFile(new URL("../vercel.json", import.meta.url), "utf8");
 const redeemApi = await readFile(new URL("../api/redeem.js", import.meta.url), "utf8");
+const generateCodesApi = await readFile(new URL("../api/generate-codes.js", import.meta.url), "utf8");
 
 const questionCount = (appJs.match(/\bid:\s*\d+/g) || []).length;
 assert.equal(questionCount, 36, "paid test should include 36 questions");
@@ -46,5 +47,9 @@ assert.match(redeemApi, /NOTION_REDEEM_DATABASE_ID/, "redeem API should read the
 assert.match(redeemApi, /buildRedeemQuery/, "redeem API should query Notion by buyer code");
 assert.match(redeemApi, /buildUsedProperties/, "redeem API should mark Notion codes as used");
 assert.match(redeemApi, /accessToken/, "redeem API should return an access token");
+assert.doesNotMatch(redeemApi, /testIdProperty|usedAtProperty|accessTokenProperty/, "redeem API should only require code and status Notion columns");
+assert.match(generateCodesApi, /REDEEM_ADMIN_TOKEN/, "code generation API should require an admin token");
+assert.match(generateCodesApi, /buildCreateCodePageBody/, "code generation API should create Notion rows");
+assert.match(generateCodesApi, /generateRedeemCodes/, "code generation API should generate redeem codes");
 
 console.log("Web app validation passed.");

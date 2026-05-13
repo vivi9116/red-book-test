@@ -1,14 +1,11 @@
 const NOTION_VERSION = "2022-06-28";
 
 const DEFAULTS = {
-  codeProperty: "兑换码",
-  statusProperty: "状态",
+  codeProperty: "\u5151\u6362\u7801",
+  statusProperty: "\u72b6\u6001",
   statusPropertyType: "status",
-  testIdProperty: "测试ID",
-  usedAtProperty: "使用时间",
-  accessTokenProperty: "访问令牌",
-  unusedStatus: "未使用",
-  usedStatus: "已使用",
+  unusedStatus: "\u672a\u4f7f\u7528",
+  usedStatus: "\u5df2\u4f7f\u7528",
 };
 
 export function normalizeCode(code) {
@@ -22,9 +19,6 @@ function getConfig(env = process.env) {
     codeProperty: env.REDEEM_CODE_PROPERTY || DEFAULTS.codeProperty,
     statusProperty: env.REDEEM_STATUS_PROPERTY || DEFAULTS.statusProperty,
     statusPropertyType: env.REDEEM_STATUS_PROPERTY_TYPE || DEFAULTS.statusPropertyType,
-    testIdProperty: env.REDEEM_TEST_ID_PROPERTY || DEFAULTS.testIdProperty,
-    usedAtProperty: env.REDEEM_USED_AT_PROPERTY || DEFAULTS.usedAtProperty,
-    accessTokenProperty: env.REDEEM_ACCESS_TOKEN_PROPERTY || DEFAULTS.accessTokenProperty,
     unusedStatus: env.REDEEM_UNUSED_CODE_STATUS || DEFAULTS.unusedStatus,
     usedStatus: env.REDEEM_USED_CODE_STATUS || DEFAULTS.usedStatus,
     corsOrigin: env.CORS_ORIGIN || "*",
@@ -52,37 +46,20 @@ export function buildRedeemQuery(code, env = process.env) {
   };
 }
 
-export function buildUsedProperties({ status, usedAt, accessToken }, env = process.env) {
+export function buildUsedProperties({ status } = {}, env = process.env) {
   const config = getConfig(env);
+  const name = status || config.usedStatus;
   const statusValue =
     config.statusPropertyType === "select"
       ? {
-          select: {
-            name: status || config.usedStatus,
-          },
+          select: { name },
         }
       : {
-          status: {
-            name: status || config.usedStatus,
-          },
+          status: { name },
         };
 
   return {
     [config.statusProperty]: statusValue,
-    [config.usedAtProperty]: {
-      date: {
-        start: usedAt,
-      },
-    },
-    [config.accessTokenProperty]: {
-      rich_text: [
-        {
-          text: {
-            content: accessToken,
-          },
-        },
-      ],
-    },
   };
 }
 
@@ -115,7 +92,6 @@ async function notionJson(response) {
 
 export async function redeemWithNotion({
   code,
-  testId,
   env = process.env,
   fetchImpl = fetch,
   now = () => new Date().toISOString(),
@@ -123,13 +99,12 @@ export async function redeemWithNotion({
 }) {
   const config = getConfig(env);
   const normalizedCode = normalizeCode(code);
-  const normalizedTestId = String(testId || "").trim();
 
-  if (!normalizedCode || !normalizedTestId) {
-    throw new Error("缺少兑换码或测试 ID");
+  if (!normalizedCode) {
+    throw new Error("\u7f3a\u5c11\u5151\u6362\u7801");
   }
   if (!config.notionToken || !config.notionDatabaseId) {
-    throw new Error("缺少 NOTION_TOKEN 或 NOTION_REDEEM_DATABASE_ID");
+    throw new Error("\u7f3a\u5c11 NOTION_TOKEN \u6216 NOTION_REDEEM_DATABASE_ID");
   }
 
   const queryUrl = `https://api.notion.com/v1/databases/${config.notionDatabaseId}/query`;
@@ -142,17 +117,12 @@ export async function redeemWithNotion({
   const page = queryPayload.results?.[0];
 
   if (!page) {
-    throw new Error("兑换码不存在");
+    throw new Error("\u5151\u6362\u7801\u4e0d\u5b58\u5728");
   }
 
   const status = propertyText(page.properties?.[config.statusProperty]);
   if (status !== config.unusedStatus) {
-    throw new Error("兑换码已经被使用");
-  }
-
-  const pageTestId = propertyText(page.properties?.[config.testIdProperty]);
-  if (pageTestId && pageTestId !== normalizedTestId) {
-    throw new Error("兑换码不适用于当前测试");
+    throw new Error("\u5151\u6362\u7801\u5df2\u7ecf\u88ab\u4f7f\u7528");
   }
 
   const redeemedAt = now();
@@ -162,11 +132,7 @@ export async function redeemWithNotion({
     method: "PATCH",
     headers: notionHeaders(config.notionToken),
     body: JSON.stringify({
-      properties: buildUsedProperties({
-        status: config.usedStatus,
-        usedAt: redeemedAt,
-        accessToken,
-      }, env),
+      properties: buildUsedProperties({ status: config.usedStatus }, env),
     }),
   });
   await notionJson(patchResponse);
@@ -174,7 +140,6 @@ export async function redeemWithNotion({
   return {
     ok: true,
     code: normalizedCode,
-    testId: normalizedTestId,
     accessToken,
     redeemedAt,
   };
@@ -220,12 +185,11 @@ export default async function handler(req, res) {
     const body = await readBody(req);
     const result = await redeemWithNotion({
       code: body.code,
-      testId: body.testId,
     });
     sendJson(res, 200, result, config.corsOrigin);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "兑换失败，请稍后再试";
-    const status = /不存在/.test(message) ? 404 : /已经被使用/.test(message) ? 409 : /不适用|缺少兑换码/.test(message) ? 400 : 500;
+    const message = error instanceof Error ? error.message : "\u5151\u6362\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5";
+    const status = /\u4e0d\u5b58\u5728/.test(message) ? 404 : /\u5df2\u7ecf\u88ab\u4f7f\u7528/.test(message) ? 409 : /\u7f3a\u5c11\u5151\u6362\u7801/.test(message) ? 400 : 500;
     sendJson(res, status, { ok: false, message }, config.corsOrigin);
   }
 }

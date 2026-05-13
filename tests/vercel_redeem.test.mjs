@@ -1,12 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {
-  buildRedeemQuery,
-  buildUsedProperties,
-  normalizeCode,
-  redeemWithNotion,
-} from "../api/redeem.js";
+import { buildRedeemQuery, buildUsedProperties, normalizeCode, redeemWithNotion } from "../api/redeem.js";
 
 const env = {
   NOTION_TOKEN: "secret_test",
@@ -32,21 +27,16 @@ test("buildRedeemQuery searches Notion by code", () => {
 test("buildUsedProperties marks a Notion redeem code as used", () => {
   const properties = buildUsedProperties({
     status: "已使用",
-    usedAt: "2026-05-13T11:00:00.000Z",
-    accessToken: "token_123",
   });
 
   assert.equal(properties["状态"].status.name, "已使用");
-  assert.equal(properties["使用时间"].date.start, "2026-05-13T11:00:00.000Z");
-  assert.equal(properties["访问令牌"].rich_text[0].text.content, "token_123");
+  assert.deepEqual(Object.keys(properties), ["状态"]);
 });
 
 test("buildUsedProperties can update a select-based Notion status column", () => {
   const properties = buildUsedProperties(
     {
       status: "已使用",
-      usedAt: "2026-05-13T11:00:00.000Z",
-      accessToken: "token_123",
     },
     { REDEEM_STATUS_PROPERTY_TYPE: "select" },
   );
@@ -66,7 +56,6 @@ test("redeemWithNotion rejects a used code without updating Notion", async () =>
             id: "page_used",
             properties: {
               状态: { status: { name: "已使用" } },
-              测试ID: { rich_text: [{ plain_text: "pleasing-personality-depth" }] },
             },
           },
         ],
@@ -75,7 +64,7 @@ test("redeemWithNotion rejects a used code without updating Notion", async () =>
   };
 
   await assert.rejects(
-    () => redeemWithNotion({ code: "AB12CD-EF34", testId: "pleasing-personality-depth", env, fetchImpl }),
+    () => redeemWithNotion({ code: "AB12CD-EF34", env, fetchImpl }),
     /已经被使用/,
   );
   assert.equal(calls.length, 1);
@@ -94,7 +83,6 @@ test("redeemWithNotion updates an unused matching Notion code", async () => {
               id: "page_unused",
               properties: {
                 状态: { status: { name: "未使用" } },
-                测试ID: { rich_text: [{ plain_text: "pleasing-personality-depth" }] },
               },
             },
           ],
@@ -106,7 +94,6 @@ test("redeemWithNotion updates an unused matching Notion code", async () => {
 
   const result = await redeemWithNotion({
     code: " ab12 cd-ef34 ",
-    testId: "pleasing-personality-depth",
     env,
     fetchImpl,
     now: () => "2026-05-13T11:00:00.000Z",
@@ -116,12 +103,11 @@ test("redeemWithNotion updates an unused matching Notion code", async () => {
   assert.deepEqual(result, {
     ok: true,
     code: "AB12CD-EF34",
-    testId: "pleasing-personality-depth",
     accessToken: "token_123",
     redeemedAt: "2026-05-13T11:00:00.000Z",
   });
   assert.equal(calls.length, 2);
   assert.match(calls[0].url, /\/databases\/db_test\/query$/);
   assert.match(calls[1].url, /\/pages\/page_unused$/);
-  assert.equal(JSON.parse(calls[1].options.body).properties["状态"].status.name, "已使用");
+  assert.deepEqual(JSON.parse(calls[1].options.body).properties, { 状态: { status: { name: "已使用" } } });
 });
