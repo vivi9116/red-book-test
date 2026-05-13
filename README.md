@@ -92,6 +92,31 @@ Local backup generation is still available:
 npm run generate:codes -- 100
 ```
 
+## Xiaohongshu Sales Assets
+
+Manual Xiaohongshu assets for each paid test live under:
+
+```text
+assets/xiaohongshu/<test-id>/
+```
+
+Current paid test:
+
+```text
+assets/xiaohongshu/pleasing-personality-depth/
+```
+
+Expected files:
+
+```text
+README.md
+cover-prompt.md
+long-copy.md
+cover.png
+```
+
+`cover.png` is the final generated image. The prompt and long-form copy are committed as editable source files.
+
 ## Deployment
 
 Current Vercel production URL:
