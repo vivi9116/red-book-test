@@ -247,7 +247,6 @@ function renderRedeem() {
         </label>
         ${state.redeemError ? `<p class="redeem-error">${state.redeemError}</p>` : ""}
         <button class="primary-btn" data-action="redeem" ${state.redeemLoading ? "disabled" : ""}>${state.redeemLoading ? "正在验证..." : "验证并开始"}</button>
-        ${isLocalPreview() ? `<p class="redeem-hint">本地预览可输入 ${LOCAL_PREVIEW_CODE}。正式上线请接入后端兑换接口。</p>` : ""}
       </div>
     </div>
   `;

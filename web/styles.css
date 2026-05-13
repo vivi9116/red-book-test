@@ -188,13 +188,6 @@ h1 {
   font-weight: 800;
 }
 
-.redeem-hint {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
 .intro-copy {
   display: grid;
   gap: 14px;

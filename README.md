@@ -33,11 +33,10 @@ The test page now shows a redeem-code screen before the test starts.
 - First successful redemption is saved in the user's browser with `localStorage`
 - The same user can reopen the page and test again on the same browser/device
 - A shared code cannot be reused once the backend marks it as used
-- Local preview code: `PREVIEW-2026`
 
 Frontend config:
 
-Copy `web/config.example.js` to `web/config.js`, set your Worker URL, and include it before `app.js` when deploying:
+Set the GitHub Actions variable `REDEEM_API_URL` to your deployed Worker redeem endpoint. The Pages workflow writes `web/config.js` during deployment:
 
 ```html
 <script src="./config.js"></script>

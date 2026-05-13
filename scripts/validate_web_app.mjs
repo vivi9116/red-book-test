@@ -5,6 +5,7 @@ const appJs = await readFile(new URL("../web/app.js", import.meta.url), "utf8");
 const html = await readFile(new URL("../web/index.html", import.meta.url), "utf8");
 const css = await readFile(new URL("../web/styles.css", import.meta.url), "utf8");
 const worker = await readFile(new URL("../workers/redeem-worker.js", import.meta.url), "utf8");
+const pagesWorkflow = await readFile(new URL("../.github/workflows/deploy-pages.yml", import.meta.url), "utf8");
 
 const questionCount = (appJs.match(/\bid:\s*\d+/g) || []).length;
 assert.equal(questionCount, 36, "paid test should include 36 questions");
@@ -19,6 +20,8 @@ assert.match(appJs, /function redeemCode/, "missing redeem-code request flow");
 assert.match(appJs, /localStorage/, "redeemed access should persist for the same browser");
 assert.match(appJs, /ACCESS_STORAGE_KEY/, "missing stable local access storage key");
 assert.match(appJs, /XHS_REDEEM_CONFIG/, "missing redeem API configuration hook");
+assert.doesNotMatch(appJs, /redeem-hint/, "formal redeem screen should not show local preview hint text");
+assert.doesNotMatch(css, /\.redeem-hint/, "formal styles should not keep local preview hint styling");
 assert.match(appJs, /function renderQuestion/, "missing question renderer");
 assert.match(html, /viewport/, "missing responsive viewport meta");
 assert.match(html, /<script src="\.\/config\.js"><\/script>\s*<script src="\.\/app\.js" defer><\/script>/, "config script should load before the app");
@@ -38,5 +41,7 @@ assert.match(css, /\.redeem-card/, "missing redeem-code screen styling");
 assert.match(worker, /REDEEM_CODES/, "redeem worker should use the REDEEM_CODES KV namespace");
 assert.match(worker, /status:\s*"used"/, "redeem worker should mark codes as used");
 assert.match(worker, /accessToken/, "redeem worker should return an access token");
+assert.match(pagesWorkflow, /github-pages/, "missing GitHub Pages deployment environment");
+assert.match(pagesWorkflow, /REDEEM_API_URL/, "Pages deployment should generate config from REDEEM_API_URL");
 
 console.log("Web app validation passed.");
