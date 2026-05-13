@@ -15,6 +15,8 @@ for (const type of ["conflict", "sacrifice", "emotion", "needed", "selfBlame", "
 assert.match(appJs, /function calculateReport/, "missing scoring function");
 assert.match(appJs, /function renderQuestion/, "missing question renderer");
 assert.match(html, /viewport/, "missing responsive viewport meta");
+assert.match(html, /<script src="\.\/app\.js" defer><\/script>/, "app script should run as a classic deferred script for file:// usage");
+assert.doesNotMatch(html, /type="module"/, "file:// usage should not depend on module scripts");
 assert.match(css, /@media \(max-width: 760px\)/, "missing mobile breakpoint");
 assert.match(css, /@media \(min-width: 1024px\)/, "missing desktop breakpoint");
 
