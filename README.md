@@ -1,8 +1,14 @@
-# XHS Emotion Test Content Automation
+# Paid Emotion Test Web
 
-This repository runs a GitHub Actions workflow that generates Xiaohongshu single-image content drafts for an emotion-test account.
+This repository hosts the paid psychological test web app, Vercel API routes, and Notion redeem-code flow.
 
-The workflow reads the active test from Notion, creates content angles when needed, generates one resonance post and one conversion post, creates an image with Volcengine Ark Seedream, and writes the draft back to Notion.
+It no longer contains the scheduled Xiaohongshu content automation workflow. The current scope is:
+
+- Paid test page
+- Redeem-code gate
+- Vercel API for redeeming codes
+- Vercel API for generating codes into Notion
+- Xiaohongshu cover image and long-form sales copy as manual product assets
 
 ## Paid Test Web App
 
@@ -39,17 +45,22 @@ Create a Notion database for redeem codes with these properties:
 
 ```text
 兑换码       title
-状态         status, with 未使用 and 已使用
+状态         select, with 未使用 and 已使用
 ```
 
-If your Notion `状态` property is a Select column instead of a Status column, set `REDEEM_STATUS_PROPERTY_TYPE=select`.
+Because the current Notion database uses a Select column for `状态`, set this Vercel variable:
 
-Vercel environment variables:
+```text
+REDEEM_STATUS_PROPERTY_TYPE=select
+```
+
+Required Vercel environment variables:
 
 ```text
 NOTION_TOKEN=<your Notion integration token>
-NOTION_REDEEM_DATABASE_ID=<your redeem-code database id>
+NOTION_REDEEM_DATABASE_ID=2546cabcf4f14f9a9e4538bec70fdb68
 REDEEM_ADMIN_TOKEN=<a private admin password for generating codes>
+REDEEM_STATUS_PROPERTY_TYPE=select
 ```
 
 Optional Vercel variables if you want different Notion property names:
@@ -57,7 +68,6 @@ Optional Vercel variables if you want different Notion property names:
 ```text
 REDEEM_CODE_PROPERTY=兑换码
 REDEEM_STATUS_PROPERTY=状态
-REDEEM_STATUS_PROPERTY_TYPE=status
 REDEEM_UNUSED_CODE_STATUS=未使用
 REDEEM_USED_CODE_STATUS=已使用
 ```
@@ -82,48 +92,19 @@ Local backup generation is still available:
 npm run generate:codes -- 100
 ```
 
-## Required GitHub Secrets
+## Deployment
 
-Add these in `Settings -> Secrets and variables -> Actions -> New repository secret`:
-
-```text
-ARK_API_KEY
-NOTION_TOKEN
-NOTION_TEST_DATABASE_ID=ee729d8b490d4d678606d48ea4f34c85
-NOTION_ANGLE_DATABASE_ID=fb197fd302974a168ca35048ee54129d
-NOTION_CONTENT_DATABASE_ID=cb65950acb9f437cb29e552144ef3f30
-```
-
-## Optional GitHub Variables
-
-Add these in `Settings -> Secrets and variables -> Actions -> Variables` if you want to override defaults:
+Current Vercel production URL:
 
 ```text
-TEXT_PROVIDER=doubao
-IMAGE_PROVIDER=doubao
-ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
-DOUBAO_TEXT_MODEL=<your text model or ep- endpoint>
-DOUBAO_IMAGE_MODEL=doubao-seedream-4-0-250828
-DOUBAO_IMAGE_SIZE=1728x2160
-DOUBAO_IMAGE_RESPONSE_FORMAT=<optional; leave empty for endpoint defaults>
-XHS_TARGET_TEST_NAME=<optional exact Notion test name>
+https://red-book-test-xi.vercel.app/
 ```
 
-## Manual Run
+After changing environment variables in Vercel, redeploy the project so the API routes read the latest values.
 
-Go to `Actions -> XHS Content Automation -> Run workflow`.
+## Tests
 
-Use mode:
-
-- `auto`
-- `both`
-- `resonance`
-- `conversion`
-
-## Smoke Test
-
-Run `Actions -> Secrets Smoke Test -> Run workflow` first. It checks GitHub Secrets, Notion access, and Doubao text API access without generating images.
-
-## Notion Dashboard
-
-https://www.notion.so/35e486c7f2f5817a9ab0ed7c47d1f659
+```text
+npm test
+npm run validate:web
+```
