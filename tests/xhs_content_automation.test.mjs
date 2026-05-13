@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  buildTestCardProperties,
   buildDoubaoImageRequestBody,
   contentPrompt,
   extractDoubaoText,
@@ -14,6 +15,7 @@ import {
   requestJson,
   resolveContentTypes,
   safeSlug,
+  testCardGenerationPrompt,
 } from "../scripts/xhs_content_automation.mjs";
 
 const sampleTitle = "\u4f60\u90a3\u4e48\u61c2\u4e8b\uff0c\u4e00\u5b9a\u5f88\u7d2f\u5427\uff1f";
@@ -79,6 +81,48 @@ test("resolveContentTypes still supports manual explicit modes", () => {
   assert.deepEqual(resolveContentTypes("resonance"), [sampleType]);
   assert.deepEqual(resolveContentTypes("conversion"), ["\u6d4b\u8bd5\u5f15\u5bfc\u578b"]);
   assert.deepEqual(resolveContentTypes("both"), [sampleType, "\u6d4b\u8bd5\u5f15\u5bfc\u578b"]);
+});
+
+test("testCardGenerationPrompt asks the model to fill all product fields from a test name", () => {
+  const prompt = testCardGenerationPrompt("\u539f\u751f\u5bb6\u5ead\u5f71\u54cd\u6d4b\u8bd5");
+
+  assert.match(prompt, /\u539f\u751f\u5bb6\u5ead\u5f71\u54cd\u6d4b\u8bd5/);
+  assert.match(prompt, /"audience"/);
+  assert.match(prompt, /"pain"/);
+  assert.match(prompt, /"scenes"/);
+  assert.match(prompt, /"fear"/);
+  assert.match(prompt, /"wanted"/);
+  assert.match(prompt, /"modules"/);
+  assert.match(prompt, /"sellingPoints"/);
+  assert.match(prompt, /"banned"/);
+  assert.match(prompt, /"visual"/);
+  assert.match(prompt, /"cta"/);
+  assert.match(prompt, /"backend"/);
+});
+
+test("buildTestCardProperties writes a generated product card with the chosen status", () => {
+  const properties = buildTestCardProperties(
+    {
+      testName: sampleTest,
+      audience: "\u5bb3\u6015\u62d2\u7edd\u522b\u4eba\u7684\u5973\u751f",
+      pain: samplePain,
+      scenes: "\u660e\u660e\u5f88\u7d2f\u8fd8\u662f\u7b54\u5e94",
+      fear: "\u6211\u5bf9\u522b\u4eba\u597d\u662f\u6015\u522b\u4eba\u79bb\u5f00",
+      wanted: "\u4f60\u4e0d\u662f\u865a\u4f2a",
+      modules: "\u8ba8\u597d\u6765\u6e90\uff1b\u5173\u7cfb\u6a21\u5f0f",
+      sellingPoints: "\u6d4b\u51fa\u4f60\u7684\u8ba8\u597d\u7c7b\u578b",
+      banned: "\u4f60\u6709\u75c5",
+      visual: "\u4f4e\u9971\u548c\u6c34\u5f69",
+      cta: "\u4e3b\u9875\u5de6\u4e0b\u89d2",
+      backend: "\u8fb9\u754c\u611f\u7ec3\u4e60\u5305",
+    },
+    "\u542f\u7528",
+  );
+
+  assert.equal(properties["\u6d4b\u8bd5\u540d\u79f0"].title[0].text.content, sampleTest);
+  assert.equal(properties["\u4e3b\u63a8\u72b6\u6001"].status.name, "\u542f\u7528");
+  assert.equal(properties["\u76ee\u6807\u7528\u6237"].rich_text[0].text.content, "\u5bb3\u6015\u62d2\u7edd\u522b\u4eba\u7684\u5973\u751f");
+  assert.equal(properties["\u4e3b\u9875\u5f15\u5bfc\u8bdd\u672f"].rich_text[0].text.content, "\u4e3b\u9875\u5de6\u4e0b\u89d2");
 });
 
 test("contentPrompt asks for senior-sister long copy, hashtags, and no citation markers", () => {

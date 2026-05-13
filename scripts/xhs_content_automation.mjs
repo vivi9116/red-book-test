@@ -9,6 +9,7 @@ const ZH = {
   conversion: "\u6d4b\u8bd5\u5f15\u5bfc\u578b",
   pass: "\u901a\u8fc7",
   active: "\u4e3b\u63a8",
+  inactive: "\u975e\u542f\u7528",
 };
 
 const CONTENT_TYPES = [ZH.resonance, ZH.conversion];
@@ -267,6 +268,70 @@ function notionHeaders(token) {
   };
 }
 
+export function testCardGenerationPrompt(testName) {
+  return `You are a product strategist for a Chinese Xiaohongshu female emotion-test business.
+
+Create a complete test product card from only this test name: "${testName}".
+
+Output JSON only:
+{
+  "testName": "${testName}",
+  "audience": "目标用户",
+  "pain": "核心痛点",
+  "scenes": "典型场景，3-6 个具体生活场景",
+  "fear": "用户最怕承认",
+  "wanted": "用户最想听到",
+  "modules": "报告模块，适合付费测试报告展示的模块",
+  "sellingPoints": "测试卖点",
+  "banned": "禁用表达",
+  "visual": "视觉风格",
+  "cta": "转化入口/CTA",
+  "backend": "后端产品"
+}
+
+Rules:
+- The card is for content conversion, not medical diagnosis.
+- Write for a user who wants to understand "我到底是哪一种" and "我为什么会这样".
+- Make scenes concrete: chats, relationships, work, family, night-time self-review, conflict, requests, silence, delayed replies.
+- Do not use disease labels, cure promises, fearmongering, shame, or medical efficacy claims.
+- Keep the tone gentle, precise, and commercially useful for Xiaohongshu content generation.`;
+}
+
+function normalizeGeneratedTestCard(card, testName) {
+  return {
+    testName,
+    audience: String(card.audience || ""),
+    pain: String(card.pain || ""),
+    scenes: String(card.scenes || ""),
+    fear: String(card.fear || ""),
+    wanted: String(card.wanted || ""),
+    modules: String(card.modules || ""),
+    sellingPoints: String(card.sellingPoints || ""),
+    banned: String(card.banned || ""),
+    visual: String(card.visual || ""),
+    cta: String(card.cta || ""),
+    backend: String(card.backend || ""),
+  };
+}
+
+export function buildTestCardProperties(card, status = ZH.active) {
+  return {
+    [TEST.name]: titleText(card.testName),
+    [TEST.status]: statusValue(status),
+    [TEST.audience]: richText(card.audience),
+    [TEST.pain]: richText(card.pain),
+    [TEST.scenes]: richText(card.scenes),
+    [TEST.fear]: richText(card.fear),
+    [TEST.wanted]: richText(card.wanted),
+    [TEST.modules]: richText(card.modules),
+    [TEST.sellingPoints]: richText(card.sellingPoints),
+    [TEST.banned]: richText(card.banned),
+    [TEST.visual]: richText(card.visual),
+    [TEST.cta]: richText(card.cta),
+    [TEST.backend]: richText(card.backend),
+  };
+}
+
 const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
 
 function sleep(ms) {
@@ -490,9 +555,75 @@ async function getActiveTest() {
   }
 
   const active = result.results.find((page) =>
-    [ZH.active, "In progress", "Done"].includes(notionPlainText(page.properties?.[TEST.status]))
+    activeTestStatuses().includes(notionPlainText(page.properties?.[TEST.status]))
   );
   return pageToTestCard(active || result.results[0]);
+}
+
+function activeTestStatuses() {
+  return [...new Set([cleanEnvValue(process.env.XHS_ACTIVE_TEST_STATUS, ZH.active), ZH.active, "\u542f\u7528", "In progress", "Done"])];
+}
+
+async function generateTestCard(testName) {
+  const generated = await openAIResponsesJson(testCardGenerationPrompt(testName));
+  return normalizeGeneratedTestCard(generated, testName);
+}
+
+async function activateGeneratedTestProduct(testName) {
+  const databaseId = requiredEnv("NOTION_TEST_DATABASE_ID");
+  const result = await notionQueryDatabase(databaseId);
+  const existing = result.results?.find((page) => notionPlainText(page.properties?.[TEST.name]) === testName);
+  const activeStatus = cleanEnvValue(process.env.XHS_ACTIVE_TEST_STATUS, ZH.active);
+  const inactiveStatus = cleanEnvValue(process.env.XHS_INACTIVE_TEST_STATUS, ZH.inactive);
+
+  let activePageId = existing?.id;
+  let activeCard;
+
+  if (existing) {
+    activeCard = pageToTestCard(existing);
+    const missingRequiredFields = [
+      activeCard.audience,
+      activeCard.pain,
+      activeCard.scenes,
+      activeCard.fear,
+      activeCard.wanted,
+      activeCard.modules,
+      activeCard.sellingPoints,
+      activeCard.visual,
+      activeCard.cta,
+      activeCard.backend,
+    ].some((value) => !String(value || "").trim());
+
+    if (missingRequiredFields) {
+      activeCard = { pageId: activePageId, ...(await generateTestCard(testName)) };
+      await notionPatchPage(activePageId, buildTestCardProperties(activeCard, activeStatus));
+    } else {
+      await notionPatchPage(activePageId, { [TEST.status]: statusValue(activeStatus) });
+      activeCard.status = activeStatus;
+    }
+  } else {
+    activeCard = await generateTestCard(testName);
+    const created = await notionCreatePage(databaseId, buildTestCardProperties(activeCard, activeStatus));
+    activePageId = created.id;
+    activeCard.pageId = activePageId;
+    activeCard.status = activeStatus;
+  }
+
+  for (const page of result.results || []) {
+    if (page.id === activePageId) continue;
+    const status = notionPlainText(page.properties?.[TEST.status]);
+    if (activeTestStatuses().includes(status)) {
+      await notionPatchPage(page.id, { [TEST.status]: statusValue(inactiveStatus) });
+    }
+  }
+
+  return { ...activeCard, pageId: activePageId, status: activeStatus };
+}
+
+async function getTestForRun() {
+  const newTestName = cleanEnvValue(process.env.XHS_NEW_TEST_NAME);
+  if (newTestName) return activateGeneratedTestProduct(newTestName);
+  return getActiveTest();
 }
 
 async function getUnusedAngle(contentType) {
@@ -736,7 +867,7 @@ async function runOneContentType(testCard, contentType) {
 }
 
 export async function main() {
-  const testCard = await getActiveTest();
+  const testCard = await getTestForRun();
   const types = resolveContentTypes(process.env.XHS_CONTENT_MODE, process.env.XHS_EVENT_SCHEDULE);
 
   for (const contentType of types) {

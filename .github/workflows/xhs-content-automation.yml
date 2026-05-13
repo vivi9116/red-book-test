@@ -12,6 +12,10 @@ on:
         description: "Content mode: auto, both, resonance, or conversion. Auto creates one scheduled post."
         required: false
         default: "auto"
+      test_name:
+        description: "Optional new test product name. If provided, Notion product fields are generated and this product becomes active."
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -49,6 +53,9 @@ jobs:
           DOUBAO_IMAGE_SIZE: ${{ vars.DOUBAO_IMAGE_SIZE || '1728x2160' }}
           DOUBAO_IMAGE_RESPONSE_FORMAT: ${{ vars.DOUBAO_IMAGE_RESPONSE_FORMAT }}
           XHS_TARGET_TEST_NAME: ${{ vars.XHS_TARGET_TEST_NAME }}
+          XHS_NEW_TEST_NAME: ${{ github.event.inputs.test_name || vars.XHS_NEW_TEST_NAME }}
+          XHS_ACTIVE_TEST_STATUS: ${{ vars.XHS_ACTIVE_TEST_STATUS || '主推' }}
+          XHS_INACTIVE_TEST_STATUS: ${{ vars.XHS_INACTIVE_TEST_STATUS || '非启用' }}
           XHS_CONTENT_MODE: ${{ github.event.inputs.mode || 'auto' }}
           XHS_EVENT_SCHEDULE: ${{ github.event.schedule }}
         run: npm run generate:xhs
