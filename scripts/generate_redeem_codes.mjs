@@ -5,7 +5,9 @@ import path from "node:path";
 const count = Number(process.argv[2] || 100);
 const testId = process.argv[3] || "pleasing-personality-depth";
 const outDir = "generated/redeem-codes";
-const outPath = path.join(outDir, `${testId}-${new Date().toISOString().slice(0, 10)}.jsonl`);
+const date = new Date().toISOString().slice(0, 10);
+const csvPath = path.join(outDir, `${testId}-${date}.csv`);
+const jsonPath = path.join(outDir, `${testId}-${date}.json`);
 
 function codePart() {
   return randomBytes(3).toString("hex").toUpperCase();
@@ -17,7 +19,12 @@ while (codes.size < count) {
 }
 
 await mkdir(outDir, { recursive: true });
-const lines = [...codes].map((code) => JSON.stringify({ key: `code:${code}`, value: { code, testId, status: "unused" } }));
-await writeFile(outPath, `${lines.join("\n")}\n`, "utf8");
+const rows = [["兑换码", "测试ID", "状态"], ...[...codes].map((code) => [code, testId, "未使用"])];
+const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+const json = [...codes].map((code) => ({ code, testId, status: "未使用" }));
 
-console.log(`Generated ${codes.size} codes: ${outPath}`);
+await writeFile(csvPath, `${csv}\n`, "utf8");
+await writeFile(jsonPath, `${JSON.stringify(json, null, 2)}\n`, "utf8");
+
+console.log(`Generated ${codes.size} Notion-ready codes: ${csvPath}`);
+console.log(`Generated JSON backup: ${jsonPath}`);
