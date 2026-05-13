@@ -569,6 +569,66 @@ h1 {
   padding-bottom: 0;
 }
 
+.family-theme {
+  --ink: #24302f;
+  --muted: #6f766e;
+  --line: #e5ddd1;
+  --paper: #fffdf8;
+  --panel: #ffffff;
+  --rose: #8b6f47;
+  --rose-soft: #efe5d2;
+  --indigo: #6e8f74;
+  --teal: #c9826b;
+  --amber: #b99658;
+  --blue: #8aa69a;
+  --mint: #b8c9b0;
+  --shadow: 0 18px 48px rgba(59, 53, 41, 0.13);
+  background:
+    linear-gradient(90deg, rgba(100, 122, 94, 0.055) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(100, 122, 94, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at 15% 12%, rgba(201, 130, 107, 0.16), transparent 30%),
+    linear-gradient(135deg, #f7f1e7, #edf4ed);
+  background-size: 32px 32px, 32px 32px, auto, auto;
+}
+
+.family-theme .test-panel,
+.family-theme .preview-board {
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.95), rgba(246, 241, 232, 0.92)),
+    repeating-linear-gradient(-6deg, rgba(139, 111, 71, 0.045) 0 1px, transparent 1px 13px);
+}
+
+.family-theme .paper-visual {
+  border-color: rgba(139, 111, 71, 0.22);
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.96), rgba(243, 235, 221, 0.92)),
+    radial-gradient(circle at 18% 28%, rgba(201, 130, 107, 0.16), transparent 28%);
+}
+
+.family-theme .paper-visual::after {
+  content: "family memory map";
+  position: absolute;
+  right: 18px;
+  bottom: 14px;
+  color: rgba(139, 111, 71, 0.34);
+  font-family: Georgia, serif;
+  font-size: 13px;
+}
+
+.family-theme .primary-btn {
+  background: #6e8f74;
+  box-shadow: 0 12px 24px rgba(110, 143, 116, 0.25);
+}
+
+.family-theme .option.selected {
+  border-color: rgba(110, 143, 116, 0.76);
+  background: rgba(238, 245, 235, 0.95);
+}
+
+.family-theme .dimension-fill {
+  background: linear-gradient(90deg, #6e8f74, #c9826b);
+}
+
 @media (max-width: 760px) {
   .topbar {
     align-items: flex-start;
