@@ -102,7 +102,7 @@ jobs:
           ARK_API_KEY: ${{ secrets.ARK_API_KEY }}
           ARK_BASE_URL: ${{ vars.ARK_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3' }}
           DOUBAO_IMAGE_MODEL: ${{ vars.DOUBAO_IMAGE_MODEL || 'doubao-seedream-4-0-250828' }}
-          ARK_IMAGE_SIZE: ${{ vars.ARK_IMAGE_SIZE || '1024x1536' }}
+          ARK_IMAGE_SIZE: ${{ vars.ARK_IMAGE_SIZE || '1728x2304' }}
         run: |
           node --input-type=commonjs <<'NODE'
           const fs = require("node:fs/promises");
@@ -143,6 +143,14 @@ jobs:
             return process.env[name];
           }
 
+          function imageSize() {
+            const requested = process.env.ARK_IMAGE_SIZE || "1728x2304";
+            const match = requested.match(/^(\d+)x(\d+)$/);
+            if (!match) return "1728x2304";
+            const pixels = Number(match[1]) * Number(match[2]);
+            return pixels >= 3686400 ? requested : "1728x2304";
+          }
+
           async function requestImage(prompt, outputPath) {
             const baseUrl = (process.env.ARK_BASE_URL || "https://ark.cn-beijing.volces.com/api/v3").replace(/\/+$/, "");
             const response = await fetch(`${baseUrl}/images/generations`, {
@@ -154,7 +162,7 @@ jobs:
               body: JSON.stringify({
                 model: process.env.DOUBAO_IMAGE_MODEL || "doubao-seedream-4-0-250828",
                 prompt,
-                size: process.env.ARK_IMAGE_SIZE || "1024x1536",
+                size: imageSize(),
                 response_format: "b64_json",
                 watermark: false,
               }),
