@@ -1,195 +1,255 @@
-const NOTION_VERSION = "2022-06-28";
-
-const DEFAULTS = {
-  codeProperty: "\u5151\u6362\u7801",
-  statusProperty: "\u72b6\u6001",
-  statusPropertyType: "status",
-  unusedStatus: "\u672a\u4f7f\u7528",
-  usedStatus: "\u5df2\u4f7f\u7528",
+const JSON_HEADERS = {
+  "Content-Type": "application/json; charset=utf-8",
+  "Cache-Control": "no-store",
 };
 
-export function normalizeCode(code) {
-  return String(code || "").trim().replace(/\s+/g, "").toUpperCase();
+const NOTION_VERSION = "2022-06-28";
+
+export function normalizeRedeemCode(value) {
+  return String(value ?? "").trim().toUpperCase();
 }
 
-function getConfig(env = process.env) {
+export function getRedeemProvider(env = process.env) {
+  if (env.NOTION_TOKEN && env.NOTION_REDEEM_CODES_DATABASE_ID) {
+    return { type: "notion" };
+  }
+
+  if (env.REDEEM_CODES) {
+    return { type: "env-codes" };
+  }
+
+  return { type: "unconfigured" };
+}
+
+export async function redeemCode(payload, env = process.env, fetchImpl = fetch) {
+  const code = normalizeRedeemCode(payload?.code);
+  const testId = String(payload?.testId ?? "").trim();
+
+  if (!code) {
+    return failure(400, "code_required", "请输入兑换码。");
+  }
+
+  const provider = getRedeemProvider(env);
+
+  if (provider.type === "notion") {
+    return redeemWithNotion({ code, testId }, env, fetchImpl);
+  }
+
+  if (provider.type === "env-codes") {
+    return redeemWithEnvCodes({ code, testId }, env);
+  }
+
+  return failure(503, "redeem_not_configured", "兑换码系统尚未配置，请联系管理员。");
+}
+
+export function redeemWithEnvCodes({ code, testId }, env = process.env) {
+  const allowedCodes = parseEnvRedeemCodes(env.REDEEM_CODES);
+  const normalizedTestId = testId.toLowerCase();
+  const matched = allowedCodes.some((entry) => {
+    const sameCode = entry.code === code;
+    const sameTest = !entry.testId || entry.testId === normalizedTestId;
+    return sameCode && sameTest;
+  });
+
+  if (!matched) {
+    return failure(401, "invalid_code", "兑换码无效，请检查后重试。");
+  }
+
   return {
-    notionToken: env.NOTION_TOKEN,
-    notionDatabaseId: env.NOTION_REDEEM_DATABASE_ID,
-    codeProperty: env.REDEEM_CODE_PROPERTY || DEFAULTS.codeProperty,
-    statusProperty: env.REDEEM_STATUS_PROPERTY || DEFAULTS.statusProperty,
-    statusPropertyType: env.REDEEM_STATUS_PROPERTY_TYPE || DEFAULTS.statusPropertyType,
-    unusedStatus: env.REDEEM_UNUSED_CODE_STATUS || DEFAULTS.unusedStatus,
-    usedStatus: env.REDEEM_USED_CODE_STATUS || DEFAULTS.usedStatus,
-    corsOrigin: env.CORS_ORIGIN || "*",
+    ok: true,
+    status: 200,
+    provider: "env-codes",
+    message: "兑换成功。",
   };
 }
 
-function notionHeaders(notionToken) {
+export function parseEnvRedeemCodes(value = "") {
+  return String(value)
+    .split(",")
+    .map((rawEntry) => rawEntry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [maybeTestId, maybeCode] = entry.split(":");
+      if (maybeCode) {
+        return {
+          testId: maybeTestId.trim().toLowerCase(),
+          code: normalizeRedeemCode(maybeCode),
+        };
+      }
+
+      return {
+        testId: "",
+        code: normalizeRedeemCode(entry),
+      };
+    });
+}
+
+async function redeemWithNotion({ code, testId }, env, fetchImpl) {
+  const databaseId = env.NOTION_REDEEM_CODES_DATABASE_ID;
+  const token = env.NOTION_TOKEN;
+  const codeProperty = env.NOTION_CODE_PROPERTY || "兑换码";
+  const codePropertyType = env.NOTION_CODE_PROPERTY_TYPE || "title";
+  const statusProperty = env.NOTION_STATUS_PROPERTY || "状态";
+  const unusedStatus = env.NOTION_UNUSED_STATUS || "未使用";
+  const usedStatus = env.NOTION_USED_STATUS || "已使用";
+  const reusableStatus = env.NOTION_REUSABLE_STATUS || "固定码";
+
+  const queryResponse = await fetchImpl(
+    `https://api.notion.com/v1/databases/${databaseId}/query`,
+    {
+      method: "POST",
+      headers: notionHeaders(token),
+      body: JSON.stringify({
+        filter: buildNotionCodeFilter({
+          code,
+          codeProperty,
+          codePropertyType,
+          testId,
+          testIdProperty: env.NOTION_TEST_ID_PROPERTY || "测试ID",
+          testIdPropertyType: env.NOTION_TEST_ID_PROPERTY_TYPE || "rich_text",
+        }),
+        page_size: 1,
+      }),
+    },
+  );
+
+  if (!queryResponse.ok) {
+    return failure(502, "redeem_lookup_failed", "兑换码系统暂时不可用，请稍后再试。");
+  }
+
+  const queryData = await queryResponse.json();
+  const page = queryData.results?.[0];
+
+  if (!page) {
+    return failure(401, "invalid_code", "兑换码无效，请检查后重试。");
+  }
+
+  const statusName = getNotionStatusName(page.properties?.[statusProperty]);
+  if (statusName === reusableStatus) {
+    return {
+      ok: true,
+      status: 200,
+      provider: "notion",
+      reusable: true,
+      message: "兑换成功。",
+    };
+  }
+
+  if (statusName !== unusedStatus) {
+    return failure(409, "code_already_used", "这个兑换码已经使用过，请联系管理员。");
+  }
+
+  const patchResponse = await fetchImpl(`https://api.notion.com/v1/pages/${page.id}`, {
+    method: "PATCH",
+    headers: notionHeaders(token),
+    body: JSON.stringify({
+      properties: {
+        [statusProperty]: buildNotionUsedStatusProperty(
+          page.properties?.[statusProperty],
+          usedStatus,
+        ),
+      },
+    }),
+  });
+
+  if (!patchResponse.ok) {
+    return failure(502, "redeem_mark_failed", "兑换码已找到，但标记使用失败，请稍后再试。");
+  }
+
   return {
-    Authorization: `Bearer ${notionToken}`,
-    "Content-Type": "application/json",
+    ok: true,
+    status: 200,
+    provider: "notion",
+    message: "兑换成功。",
+  };
+}
+
+export function buildNotionCodeFilter({
+  code,
+  codeProperty,
+  codePropertyType,
+  testId,
+  testIdProperty,
+  testIdPropertyType,
+}) {
+  const filters = [
+    {
+      property: codeProperty,
+      [codePropertyType]: { equals: code },
+    },
+  ];
+
+  if (testIdProperty && testId) {
+    filters.push({ property: testIdProperty, [testIdPropertyType]: { equals: testId } });
+  }
+
+  return filters.length === 1 ? filters[0] : { and: filters };
+}
+
+export function getNotionStatusName(property) {
+  return (
+    property?.status?.name ??
+    property?.select?.name ??
+    property?.rich_text?.[0]?.plain_text ??
+    ""
+  );
+}
+
+export function buildNotionUsedStatusProperty(property, statusName) {
+  if (property?.type === "select" || property?.select) {
+    return { select: { name: statusName } };
+  }
+
+  return { status: { name: statusName } };
+}
+
+function notionHeaders(token) {
+  return {
+    ...JSON_HEADERS,
+    Authorization: `Bearer ${token}`,
     "Notion-Version": NOTION_VERSION,
   };
 }
 
-export function buildRedeemQuery(code, env = process.env) {
-  const config = getConfig(env);
+function failure(status, error, message) {
   return {
-    filter: {
-      property: config.codeProperty,
-      title: {
-        equals: normalizeCode(code),
-      },
-    },
-    page_size: 1,
+    ok: false,
+    status,
+    error,
+    message,
   };
 }
 
-export function buildUsedProperties({ status } = {}, env = process.env) {
-  const config = getConfig(env);
-  const name = status || config.usedStatus;
-  const statusValue =
-    config.statusPropertyType === "select"
-      ? {
-          select: { name },
-        }
-      : {
-          status: { name },
-        };
-
-  return {
-    [config.statusProperty]: statusValue,
-  };
-}
-
-function propertyText(property) {
-  if (!property) return "";
-  if (property.type === "title") return (property.title || []).map((item) => item.plain_text || "").join("");
-  if (property.type === "rich_text") return (property.rich_text || []).map((item) => item.plain_text || "").join("");
-  if (property.type === "select") return property.select?.name || "";
-  if (property.type === "status") return property.status?.name || "";
-
-  if (Array.isArray(property.title)) return property.title.map((item) => item.plain_text || "").join("");
-  if (Array.isArray(property.rich_text)) return property.rich_text.map((item) => item.plain_text || "").join("");
-  return property.select?.name || property.status?.name || "";
-}
-
-function randomToken() {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-async function notionJson(response) {
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const message = payload.message || payload.error || `Notion request failed: ${response.status}`;
-    throw new Error(message);
-  }
-  return payload;
-}
-
-export async function redeemWithNotion({
-  code,
-  env = process.env,
-  fetchImpl = fetch,
-  now = () => new Date().toISOString(),
-  tokenFactory = randomToken,
-}) {
-  const config = getConfig(env);
-  const normalizedCode = normalizeCode(code);
-
-  if (!normalizedCode) {
-    throw new Error("\u7f3a\u5c11\u5151\u6362\u7801");
-  }
-  if (!config.notionToken || !config.notionDatabaseId) {
-    throw new Error("\u7f3a\u5c11 NOTION_TOKEN \u6216 NOTION_REDEEM_DATABASE_ID");
+async function readRequestBody(request) {
+  if (request.body && typeof request.body === "object" && !request.body.getReader) {
+    return request.body;
   }
 
-  const queryUrl = `https://api.notion.com/v1/databases/${config.notionDatabaseId}/query`;
-  const queryResponse = await fetchImpl(queryUrl, {
-    method: "POST",
-    headers: notionHeaders(config.notionToken),
-    body: JSON.stringify(buildRedeemQuery(normalizedCode, env)),
-  });
-  const queryPayload = await notionJson(queryResponse);
-  const page = queryPayload.results?.[0];
-
-  if (!page) {
-    throw new Error("\u5151\u6362\u7801\u4e0d\u5b58\u5728");
+  let rawBody = "";
+  for await (const chunk of request) {
+    rawBody += chunk;
   }
 
-  const status = propertyText(page.properties?.[config.statusProperty]);
-  if (status !== config.unusedStatus) {
-    throw new Error("\u5151\u6362\u7801\u5df2\u7ecf\u88ab\u4f7f\u7528");
-  }
-
-  const redeemedAt = now();
-  const accessToken = tokenFactory();
-  const patchUrl = `https://api.notion.com/v1/pages/${page.id}`;
-  const patchResponse = await fetchImpl(patchUrl, {
-    method: "PATCH",
-    headers: notionHeaders(config.notionToken),
-    body: JSON.stringify({
-      properties: buildUsedProperties({ status: config.usedStatus }, env),
-    }),
-  });
-  await notionJson(patchResponse);
-
-  return {
-    ok: true,
-    code: normalizedCode,
-    accessToken,
-    redeemedAt,
-  };
+  if (!rawBody) return {};
+  return JSON.parse(rawBody);
 }
 
-async function readBody(req) {
-  if (req.body && typeof req.body === "object") return req.body;
-  if (typeof req.body === "string") return JSON.parse(req.body || "{}");
-
-  const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
-  const rawBody = Buffer.concat(chunks).toString("utf8");
-  return rawBody ? JSON.parse(rawBody) : {};
-}
-
-function sendJson(res, status, body, origin = "*") {
-  res.statusCode = status;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.end(JSON.stringify(body));
-}
-
-export default async function handler(req, res) {
-  const config = getConfig();
-
-  if (req.method === "OPTIONS") {
-    res.statusCode = 204;
-    res.setHeader("Access-Control-Allow-Origin", config.corsOrigin);
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    res.end();
-    return;
-  }
-
-  if (req.method !== "POST") {
-    sendJson(res, 405, { ok: false, message: "Method not allowed" }, config.corsOrigin);
+export default async function handler(request, response) {
+  if (request.method !== "POST") {
+    response.writeHead(405, JSON_HEADERS);
+    response.end(JSON.stringify(failure(405, "method_not_allowed", "请使用 POST 请求。")));
     return;
   }
 
   try {
-    const body = await readBody(req);
-    const result = await redeemWithNotion({
-      code: body.code,
-    });
-    sendJson(res, 200, result, config.corsOrigin);
+    const body = await readRequestBody(request);
+    const result = await redeemCode(body);
+    response.writeHead(result.status, JSON_HEADERS);
+    response.end(JSON.stringify(result));
   } catch (error) {
-    const message = error instanceof Error ? error.message : "\u5151\u6362\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5";
-    const status = /\u4e0d\u5b58\u5728/.test(message) ? 404 : /\u5df2\u7ecf\u88ab\u4f7f\u7528/.test(message) ? 409 : /\u7f3a\u5c11\u5151\u6362\u7801/.test(message) ? 400 : 500;
-    sendJson(res, status, { ok: false, message }, config.corsOrigin);
+    response.writeHead(400, JSON_HEADERS);
+    response.end(
+      JSON.stringify(failure(400, "invalid_request", "请求格式不正确，请刷新后重试。")),
+    );
   }
 }

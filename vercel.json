@@ -5,8 +5,12 @@
       "destination": "/api/:path*"
     },
     {
-      "source": "/(.*)",
-      "destination": "/web/$1"
+      "source": "/",
+      "destination": "/web/index.html"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/web/:path*"
     }
   ]
 }

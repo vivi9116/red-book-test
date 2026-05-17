@@ -3,64 +3,78 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>讨好型人格深度测试</title>
+    <title>付费测试</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="app-shell">
-      <header class="topbar">
+    <main class="app-shell">
+      <section class="test-catalog" id="test-catalog">
+        <p class="eyebrow">付费测试</p>
+        <h1>选择要进入的测试</h1>
+        <p class="subtitle">每个测试都有独立题目、结果类型和报告。客户可以用对应链接直接进入。</p>
+        <div class="test-list" id="test-list"></div>
+      </section>
+
+      <header class="topbar hidden" id="test-topbar">
         <div>
-          <p class="eyebrow">付费深度版</p>
-          <h1>讨好型人格深度测试</h1>
+          <p class="eyebrow" id="topbar-eyebrow"></p>
+          <h1 id="topbar-title"></h1>
         </div>
-        <div class="mini-badge">36 题</div>
+        <div class="mini-badge" id="topbar-badge"></div>
         <span class="deco-heart" aria-hidden="true">♡</span>
       </header>
 
-      <main class="layout">
-        <section class="test-panel" aria-live="polite">
-          <div id="app"></div>
+      <section class="product-stage hidden" id="product-stage">
+        <section class="preview-board hidden" id="preview-board" aria-label="报告预览">
+          <span class="tape tape-mint" aria-hidden="true"></span>
+          <div class="paper-visual" id="paper-visual">
+            <span class="pin" aria-hidden="true"></span>
+            <p class="board-kicker">测完你会看到</p>
+            <div class="paper-title" id="paper-title"></div>
+            <div class="visual-content" id="visual-content"></div>
+            <span class="sticker-note" id="paper-note">paid report</span>
+          </div>
+          <div class="module-list" id="module-list"></div>
         </section>
-      </main>
 
-      <section class="preview-board" aria-label="报告预览">
-        <span class="tape tape-mint" aria-hidden="true"></span>
-        <div class="paper-visual">
-          <span class="pin"></span>
-          <p class="board-kicker">测完你会看到</p>
-          <div class="paper-title">你最容易讨好的关系</div>
-          <div class="paper-line w1"></div>
-          <div class="paper-line w2"></div>
-          <div class="paper-line w3"></div>
-          <div class="mini-bars" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
+        <section class="test-panel hidden" id="test-panel">
+          <section class="intro hidden" id="intro">
+            <div class="intro-copy">
+              <p class="eyebrow" id="intro-eyebrow"></p>
+              <h2 id="intro-title"></h2>
+              <p class="subtitle" id="intro-subtitle"></p>
+              <div class="preview-list" id="preview-list"></div>
+            </div>
+            <div class="redeem-panel">
+              <label for="redeem-code">兑换码</label>
+              <div class="redeem-row">
+                <input id="redeem-code" autocomplete="off" placeholder="填写专属码后开始" />
+                <button id="start-button" type="button">开始</button>
+              </div>
+              <p class="redeem-message hidden" id="redeem-message" aria-live="polite"></p>
+              <p class="microcopy">完成后生成你的专属报告。</p>
+            </div>
+          </section>
+
+        <section class="quiz hidden" id="quiz" aria-live="polite">
+          <div class="quiz-topline">
+            <span id="progress-label"></span>
+            <span id="dimension-label"></span>
+            <span id="time-label"></span>
           </div>
-          <span class="sticker-note">not a label</span>
-        </div>
-        <div class="module-list">
-          <div>
-            <strong>你不敢拒绝的原因</strong>
-            <span>看见愧疚感背后的关系恐惧</span>
-          </div>
-          <div>
-            <strong>你在关系里牺牲了什么</strong>
-            <span>时间、情绪、自我价值和边界</span>
-          </div>
-          <div>
-            <strong>你的讨好来源</strong>
-            <span>成长经验如何变成关系习惯</span>
-          </div>
-          <div>
-            <strong>你的边界练习起点</strong>
-            <span>从识别自己的不愿意开始</span>
-          </div>
-        </div>
+            <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+            <h2 id="question-title"></h2>
+            <div class="options" id="options"></div>
+            <div class="quiz-actions">
+              <button id="prev-button" type="button">上一题</button>
+              <button id="next-button" type="button">下一题</button>
+            </div>
+          </section>
+
+          <section class="report hidden" id="report"></section>
+        </section>
       </section>
-    </div>
-
-    <script src="./config.js"></script>
-    <script src="./app.js" defer></script>
+    </main>
+    <script type="module" src="./app.js"></script>
   </body>
 </html>
