@@ -177,8 +177,13 @@ jobs:
             await fs.writeFile(outputPath, buffer);
           }
 
-          await requestImage(coverPrompt, "web/assets/attachment-pattern/cover.png");
-          await requestImage(longPrompt, "web/assets/attachment-pattern/long-image.png");
+          (async () => {
+            await requestImage(coverPrompt, "web/assets/attachment-pattern/cover.png");
+            await requestImage(longPrompt, "web/assets/attachment-pattern/long-image.png");
+          })().catch((error) => {
+            console.error(error);
+            process.exitCode = 1;
+          });
           NODE
 
       - name: Upload paid-test assets
