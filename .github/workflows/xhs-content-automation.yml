@@ -104,7 +104,7 @@ jobs:
           DOUBAO_IMAGE_MODEL: ${{ vars.DOUBAO_IMAGE_MODEL || 'doubao-seedream-4-0-250828' }}
           ARK_IMAGE_SIZE: ${{ vars.ARK_IMAGE_SIZE || '1024x1536' }}
         run: |
-          node <<'NODE'
+          node --input-type=commonjs <<'NODE'
           const fs = require("node:fs/promises");
           const path = require("node:path");
 
