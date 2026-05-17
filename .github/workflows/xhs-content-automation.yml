@@ -1,6 +1,11 @@
 name: XHS Content Automation
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/xhs-content-automation.yml"
   schedule:
     # 11:00 China Standard Time (UTC+8)
     - cron: "0 3 * * *"
@@ -22,6 +27,7 @@ permissions:
 
 jobs:
   generate:
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -78,5 +84,119 @@ jobs:
             echo "No generated image changes to commit."
           else
             git commit -m "chore: add generated xhs content images"
+            git push
+          fi
+
+  generate-paid-test-assets:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Generate attachment-pattern assets with Ark Seedream
+        env:
+          ARK_API_KEY: ${{ secrets.ARK_API_KEY }}
+          ARK_BASE_URL: ${{ vars.ARK_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3' }}
+          DOUBAO_IMAGE_MODEL: ${{ vars.DOUBAO_IMAGE_MODEL || 'doubao-seedream-4-0-250828' }}
+          ARK_IMAGE_SIZE: ${{ vars.ARK_IMAGE_SIZE || '1024x1536' }}
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs/promises");
+          const path = require("node:path");
+
+          const coverPrompt = `生成一张 3:4 竖版小红书封面图，主题是“亲密关系依恋模式测试”。
+必须是小红书手帐拼贴风，风格参考：真实旧纸背景、撕纸边缘、胶带、便签卡片、翻开的日记本、人物剪贴、旧照片、干花、爱心、箭头、铅笔涂鸦。
+画面不是网页排版，不是扁平 UI，不是简单文字海报。
+构图必须清楚：
+1. 顶部大块撕纸标题，粗手写中文大字：你以为自己只是太在乎
+2. 标题下方豆沙红撕纸横条：其实是在重复一种亲密保护模式
+3. 中间大面积翻开的旧日记本，纸张有真实纹理、横线、旧书边缘和阴影。
+4. 日记本中央贴一个女生背影纸片剪贴，穿低饱和橄榄绿背带裙，像贴纸一样有白边。
+5. 日记本两页上有手写观察笔记和聊天气泡：TA没回，我就开始不安；我想靠近，又怕被嫌烦；一冲突就想确认或逃开；我没事被划掉。
+6. 底部左右各有一张旧照片拼贴：左边“那时的你”，右边“现在的关系”，照片里是水彩手绘亲密关系和童年关系场景。
+7. 画面有虚线箭头连接过去和现在，有回形针、胶带、干花、手绘爱心和红色划线。
+8. 右上角便签写：亲密关系不是答案，而是线索。
+色彩：温暖米色旧纸、豆沙红、橄榄绿、奶油黄、浅棕色，低饱和，高级精致。
+质感：真实纸张拼贴、撕纸毛边、复古手帐、情绪日记、关系观察笔记。
+中文标题必须醒目、可读、像手写毛笔字。不要水印，不要现代按钮，不要科技感，不要空白背景。`;
+
+          const longPrompt = `生成一张 3:4 竖版小红书长图配图，主题是“你在关系里的反应，不一定是太敏感”。
+必须是小红书手帐拼贴风，像一页关系观察日记。
+构图必须清楚：
+1. 顶部撕纸大标题，粗手写中文：你在关系里的反应，不一定是“太敏感”
+2. 中间是一页旧纸关系地图，五张便签围成循环：追问确认、回避抽离、试探和反话、讨好维持、稳定修复。
+3. 中央有女生背影剪贴，像纸片贴在关系地图前，穿低饱和橄榄绿背带裙。
+4. 左右两侧加入旧照片拼贴：一张等待手机消息的场景，一张两个人沉默坐在窗边的场景，水彩手绘质感。
+5. 有聊天纸条：TA一安静，我就开始想：是不是我不够好？
+6. 底部撕纸说明：不是给你贴标签，而是帮你看见你在爱里如何保护自己。
+7. 胶带、回形针、干花、爱心、虚线箭头、铅笔涂鸦、红色手写划线要丰富，但不能乱。
+色彩：温暖米色旧纸、豆沙红、橄榄绿、奶油黄、浅棕色，低饱和，高级精致。
+质感：真实纸张拼贴、撕纸毛边、复古手帐、情绪日记、关系观察笔记。
+不要网页卡片，不要现代 UI，不要科技感，不要纯文字海报，不要空白背景，不要水印。`;
+
+          function required(name) {
+            if (!process.env[name]) throw new Error(`Missing required env: ${name}`);
+            return process.env[name];
+          }
+
+          async function requestImage(prompt, outputPath) {
+            const baseUrl = (process.env.ARK_BASE_URL || "https://ark.cn-beijing.volces.com/api/v3").replace(/\/+$/, "");
+            const response = await fetch(`${baseUrl}/images/generations`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${required("ARK_API_KEY")}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: process.env.DOUBAO_IMAGE_MODEL || "doubao-seedream-4-0-250828",
+                prompt,
+                size: process.env.ARK_IMAGE_SIZE || "1024x1536",
+                response_format: "b64_json",
+                watermark: false,
+              }),
+            });
+            const text = await response.text();
+            if (!response.ok) throw new Error(`Ark image request failed ${response.status}: ${text}`);
+            const json = JSON.parse(text);
+            const image = json?.data?.[0];
+            let buffer;
+            if (image?.b64_json) {
+              buffer = Buffer.from(image.b64_json, "base64");
+            } else if (image?.url) {
+              const imageResponse = await fetch(image.url);
+              if (!imageResponse.ok) throw new Error(`Image download failed: ${imageResponse.status}`);
+              buffer = Buffer.from(await imageResponse.arrayBuffer());
+            } else {
+              throw new Error("Ark response did not include b64_json or url");
+            }
+            await fs.mkdir(path.dirname(outputPath), { recursive: true });
+            await fs.writeFile(outputPath, buffer);
+          }
+
+          await requestImage(coverPrompt, "web/assets/attachment-pattern/cover.png");
+          await requestImage(longPrompt, "web/assets/attachment-pattern/long-image.png");
+          NODE
+
+      - name: Upload paid-test assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: paid-test-assets-attachment-pattern
+          path: |
+            web/assets/attachment-pattern/cover.png
+            web/assets/attachment-pattern/long-image.png
+
+      - name: Commit generated paid-test assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/assets/attachment-pattern/cover.png web/assets/attachment-pattern/long-image.png
+          if git diff --cached --quiet; then
+            echo "No generated paid-test asset changes to commit."
+          else
+            git commit -m "chore: generate attachment xhs assets"
             git push
           fi
