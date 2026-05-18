@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-18 16:25
+# Regeneration trigger: 2026-05-18 16:35
 on:
   push:
     branches:
@@ -40,7 +40,7 @@ jobs:
           ARK_API_KEY: ${{ secrets.ARK_API_KEY }}
           ARK_BASE_URL: ${{ vars.ARK_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3' }}
           DOUBAO_IMAGE_MODEL: ${{ vars.DOUBAO_IMAGE_MODEL || 'doubao-seedream-4-0-250828' }}
-          ARK_IMAGE_SIZE: ${{ vars.ARK_IMAGE_SIZE || '1024x1536' }}
+          ARK_IMAGE_SIZE: "1680x2240"
         run: node scripts/generate_free_test_carousel_assets.mjs "${{ github.event.inputs.test_id }}"
 
       - name: Commit generated carousel

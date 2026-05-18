@@ -142,6 +142,8 @@ C. 灵魂契合，能否携手同行（1分）
   },
 };
 
+const DEFAULT_IMAGE_SIZE = "1680x2240";
+
 function loadLocalEnv() {
   for (const file of [".env.local", ".env"]) {
     if (!existsSync(file)) continue;
@@ -174,7 +176,7 @@ async function generateArkImage(prompt, outputPath) {
   const apiKey = requiredEnv("ARK_API_KEY");
   const baseUrl = (process.env.ARK_BASE_URL || "https://ark.cn-beijing.volces.com/api/v3").replace(/\/+$/, "");
   const model = process.env.DOUBAO_IMAGE_MODEL || "doubao-seedream-4-0-250828";
-  const size = process.env.ARK_IMAGE_SIZE || "1024x1536";
+  const size = process.env.ARK_IMAGE_SIZE || DEFAULT_IMAGE_SIZE;
 
   const response = await requestJson(`${baseUrl}/images/generations`, {
     method: "POST",
