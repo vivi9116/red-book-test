@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 import { existsSync, readFileSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const WIDTH = 1680;
@@ -235,6 +235,7 @@ async function main() {
     const outputPath = path.join(TEST.folder, slide.file);
     await generateArkImage(slide.prompt, rawPath);
     await composeText(rawPath, outputPath, slide);
+    await rm(rawPath, { force: true });
     console.log(`Generated ${slide.file}`);
   }
 }
