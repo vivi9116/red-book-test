@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-18 20:45
+# Regeneration trigger: 2026-05-18 21:20 original journal style
 on:
   push:
     branches:
@@ -34,14 +34,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-
-      - name: Install Chinese fonts
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y fonts-noto-cjk
-
-      - name: Install image composer
-        run: npm install sharp@0.33.5
 
       - name: Generate free test carousel images
         env:
