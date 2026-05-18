@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-18 22:05 cleaner writing area and smaller exact text
+# Regeneration trigger: 2026-05-18 22:25 native cover plus exact question text
 on:
   push:
     branches:
