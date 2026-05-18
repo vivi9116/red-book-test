@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-18 21:40 blank journal base plus exact text
+# Regeneration trigger: 2026-05-18 22:05 cleaner writing area and smaller exact text
 on:
   push:
     branches:

@@ -9,7 +9,7 @@ const FOLDER = "web/assets/free-tests/physical-vs-psychological-like";
 const rawStyle = `3:4竖版，小红书手帐拼贴风，温暖米色旧纸背景，真实撕纸毛边，翻开的日记本/关系笔记，白边人物贴纸，旧照片拼贴，便签，胶带，回形针，干花，爱心，红笔箭头，铅笔涂鸦。
 整体像“测试日记 / 情绪手帐 / 关系观察笔记”，精致、自然、可以直接发小红书。
 不要像网页截图，不要像PPT，不要像简单海报，不要出现大白框、透明卡片、大圆角卡片。
-必须留出干净的撕纸标题区和日记本横线纸面，方便后期写清晰中文。
+必须留出干净的撕纸标题区和日记本横线纸面，方便后期写清晰中文。装饰只能放在边缘，不能进入主要书写区域。
 画面里不要出现任何文字、数字、英文字母、乱码、水印。`;
 
 const rawPages = [
@@ -24,25 +24,25 @@ const rawPages = [
   {
     file: ".raw-02-q1-3.png",
     prompt: `${rawStyle}
-第1-3题底图。顶部是一条空白棕色撕纸标题条，中间是一页翻开的空白横线日记本纸，纸面要足够干净，适合写三道测试题。
-右侧可以有女生头像白边贴纸和回形针，底部留一张空白奶油黄撕纸提示条。`,
+第1-3题底图。顶部是一条空白棕色撕纸标题条，中间是一页翻开的空白横线日记本纸，日记本从画面约四分之一高度开始，占据画面中下部，纸面中间必须干净，适合写三道测试题。
+女生头像白边贴纸、回形针、旧照片、干花只能放在左右边缘或角落，不能压到纸面中间。底部留一张空白奶油黄撕纸提示条。`,
   },
   {
     file: ".raw-03-q4-6.png",
     prompt: `${rawStyle}
-第4-6题底图。顶部是一条空白棕色撕纸标题条，中间是一页翻开的空白横线日记本纸，纸面要足够干净，适合写三道测试题。
-旁边有电影票样式贴纸但不要写字，还可以有女生白边贴纸、胶带、干花和回形针，底部留一张空白小撕纸提示条。`,
+第4-6题底图。顶部是一条空白棕色撕纸标题条，中间是一页翻开的空白横线日记本纸，日记本从画面约四分之一高度开始，占据画面中下部，纸面中间必须干净，适合写三道测试题。
+电影票样式贴纸、女生白边贴纸、胶带、干花和回形针只能放在左右边缘或角落，不能压到纸面中间。底部留一张空白小撕纸提示条。`,
   },
   {
     file: ".raw-04-q7-9.png",
     prompt: `${rawStyle}
-第7-9题底图。顶部是一条空白棕色撕纸标题条，中间是一页翻开的空白横线日记本纸，纸面要足够干净，适合写三道测试题。
-旁边有异地聊天手机贴纸、旧照片、便签、胶带、干花和人物白边贴纸，底部留一张空白小撕纸提示条。`,
+第7-9题底图。顶部是一条空白棕色撕纸标题条，中间是一页翻开的空白横线日记本纸，日记本从画面约四分之一高度开始，占据画面中下部，纸面中间必须干净，适合写三道测试题。
+异地聊天手机贴纸、旧照片、便签、胶带、干花和人物白边贴纸只能放在左右边缘或角落，不能压到纸面中间。底部留一张空白小撕纸提示条。`,
   },
   {
     file: ".raw-05-q10-result.png",
     prompt: `${rawStyle}
-最后1题和结果页底图。顶部是一条空白棕色撕纸标题条，中间是一页翻开的空白横线日记本纸，上方留题目区域，下方留三张空白手帐便签。
+最后1题和结果页底图。顶部是一条空白棕色撕纸标题条，中间是一页翻开的空白横线日记本纸，上方留题目区域，下方留三张空白手帐便签，主要书写区域必须干净。
 底部留一张空白豆沙红或奶油黄撕纸提示条，周围有旧照片拼贴、人物贴纸、胶带、回形针、干花、爱心和红笔箭头。`,
   },
 ];
@@ -146,30 +146,30 @@ function brand() {
 function coverOverlay(page) {
   return `
   ${brand()}
-  ${text(page.title[0], 840, 565, 92, { anchor: "middle", weight: 700 })}
-  ${text(page.title[1], 840, 735, 112, { anchor: "middle", color: "#b24352", weight: 800 })}
-  ${text(page.title[2], 840, 910, 112, { anchor: "middle", color: "#b24352", weight: 800 })}
-  ${text(page.badge, 840, 1110, 58, { anchor: "middle", weight: 800 })}
-  ${text(page.footer, 840, 2095, 70, { anchor: "middle", color: "#a43b4b", weight: 800 })}
+  ${text(page.title[0], 840, 535, 78, { anchor: "middle", weight: 700 })}
+  ${text(page.title[1], 840, 685, 96, { anchor: "middle", color: "#b24352", weight: 800 })}
+  ${text(page.title[2], 840, 840, 96, { anchor: "middle", color: "#b24352", weight: 800 })}
+  ${text(page.badge, 840, 1080, 54, { anchor: "middle", weight: 800 })}
+  ${text(page.footer, 840, 2085, 58, { anchor: "middle", color: "#a43b4b", weight: 800 })}
 `;
 }
 
 function questionLines(question, startY) {
   const [title, options] = question;
-  const lines = [text(title, 285, startY, 48, { weight: 700, rotate: -1 })];
+  const lines = [text(title, 290, startY, 43, { weight: 700, rotate: -1 })];
   let y = startY + 74;
   for (const option of options) {
-    lines.push(text(option, 340, y, 43, { weight: 500, rotate: -1 }));
-    y += 64;
+    lines.push(text(option, 345, y, 37, { weight: 500, rotate: -1 }));
+    y += 58;
   }
   return lines.join("");
 }
 
 function questionsOverlay(page) {
-  const starts = page.questions.length === 1 ? [725] : [620, 1045, 1470];
+  const starts = page.questions.length === 1 ? [720] : [590, 1010, 1430];
   return `
   ${brand()}
-  ${text(page.title, 840, 340, 76, { anchor: "middle", color: "#9f3348", weight: 800, rotate: -1 })}
+  ${text(page.title, 840, 330, 68, { anchor: "middle", color: "#9f3348", weight: 800, rotate: -1 })}
   ${page.questions.map((question, index) => questionLines(question, starts[index])).join("")}
   ${text(page.footer, 840, 2090, 58, { anchor: "middle", color: "#a43b4b", weight: 800, rotate: -1 })}
 `;
@@ -178,9 +178,9 @@ function questionsOverlay(page) {
 function resultOverlay(page) {
   return `
   ${questionsOverlay({ ...page, footer: "" })}
-  ${page.results.map((line, index) => text(line, 370, 1265 + index * 90, 58, { color: "#a43b4b", weight: 800, rotate: -1 })).join("")}
-  ${text(page.footer[0], 840, 1975, 58, { anchor: "middle", color: "#a43b4b", weight: 800 })}
-  ${text(page.footer[1], 840, 2058, 52, { anchor: "middle", color: "#a43b4b", weight: 800 })}
+  ${page.results.map((line, index) => text(line, 360, 1235 + index * 82, 48, { color: "#a43b4b", weight: 800, rotate: -1 })).join("")}
+  ${text(page.footer[0], 840, 1975, 50, { anchor: "middle", color: "#a43b4b", weight: 800 })}
+  ${text(page.footer[1], 840, 2052, 46, { anchor: "middle", color: "#a43b4b", weight: 800 })}
 `;
 }
 
