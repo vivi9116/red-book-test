@@ -1,0 +1,47 @@
+name: Generate Free Test Carousel
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_id:
+        description: "Free test id"
+        required: false
+        default: "physical-vs-psychological-like"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Generate free test carousel images
+        env:
+          ARK_API_KEY: ${{ secrets.ARK_API_KEY }}
+          ARK_BASE_URL: ${{ vars.ARK_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3' }}
+          DOUBAO_IMAGE_MODEL: ${{ vars.DOUBAO_IMAGE_MODEL || 'doubao-seedream-4-0-250828' }}
+          ARK_IMAGE_SIZE: ${{ vars.ARK_IMAGE_SIZE || '1024x1536' }}
+        run: node scripts/generate_free_test_carousel_assets.mjs "${{ github.event.inputs.test_id }}"
+
+      - name: Commit generated carousel
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/assets/free-tests
+          if git diff --cached --quiet; then
+            echo "No carousel image changes to commit."
+          else
+            git commit -m "chore: generate free test carousel images"
+            git push
+          fi
