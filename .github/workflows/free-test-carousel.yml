@@ -1,6 +1,14 @@
 name: Generate Free Test Carousel
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/free-test-carousel.yml"
+      - "scripts/generate_free_test_carousel_assets.mjs"
+      - "web/assets/free-tests/physical-vs-psychological-like/copy.md"
+      - "web/assets/free-tests/physical-vs-psychological-like/image-prompts.md"
   workflow_dispatch:
     inputs:
       test_id:
