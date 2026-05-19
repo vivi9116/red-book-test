@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-19 18:35 preference full rebuild
+# Regeneration trigger: 2026-05-19 18:50 preference rebuild layout fix
 on:
   push:
     branches:

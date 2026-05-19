@@ -325,6 +325,16 @@ function polaroid(x, y, width, height, rotate = 0, variant = "couple") {
   return rotate ? rotateGroup(x, y, width, height, rotate, body) : body;
 }
 
+function stampPhoto(x, y, width, height, rotate = 0, tone = "#bfa77f") {
+  const body = `<g>
+    <path d="${tornPath(x, y, width, height, 10)}" fill="#fbf7ef" filter="url(#softShadow)"/>
+    <rect x="${x + 20}" y="${y + 18}" width="${width - 40}" height="${height - 42}" fill="${tone}" opacity="0.72"/>
+    <rect x="${x + 20}" y="${y + 18}" width="${width - 40}" height="${height - 42}" filter="url(#grain)" opacity="0.5"/>
+    <path d="M${x + 20} ${y + height - 88} C${x + width * 0.35} ${y + height - 150},${x + width * 0.6} ${y + height - 40},${x + width - 20} ${y + height - 115} L${x + width - 20} ${y + height - 42} L${x + 20} ${y + height - 42} Z" fill="#efe2c9" opacity="0.48"/>
+  </g>`;
+  return rotate ? rotateGroup(x, y, width, height, rotate, body) : body;
+}
+
 function lineSticker(x, y, scale = 1, rotate = 0) {
   const body = `<g transform="translate(${x} ${y}) scale(${scale})">
     <path d="M38 178 C30 128,31 75,44 32 C54 0,98 0,108 34 C124 85,120 126,110 178 Z" fill="#fffefa" stroke="#1e1a16" stroke-width="5"/>
@@ -390,8 +400,8 @@ function localCoverSvg(page) {
     ${handText(page.title[2], 840, 725, 102, { anchor: "middle", weight: 500, rotate: -1 })}
     ${localPaper(610, 850, 460, 110, "#d5b47e", "#b79260", -2, 0.96)}
     ${handText(page.badge, 840, 924, 54, { anchor: "middle", weight: 500, rotate: -2 })}
-    ${polaroid(180, 1125, 370, 335, -6, "couple")}
-    ${polaroid(1135, 1110, 360, 320, 5, "cool")}
+    ${stampPhoto(180, 1125, 370, 335, -6, "#bfa77f")}
+    ${stampPhoto(1135, 1110, 360, 320, 5, "#9fa794")}
     ${coverPersonSticker()}
     ${localFlower(640, 1060, 1.05, -12)}
     ${localArrow(1245, 1010, 1365, 930)}
@@ -409,7 +419,7 @@ function localQuestionPageSvg(page, variant) {
   const titleColor = variant === 3 ? "#f8f4ea" : "#c7a174";
   const paperFill = variant === 2 ? "#fbf7ec" : "#f5eddf";
   const sheetRotate = variant === 2 ? -0.5 : variant === 3 ? 1.2 : -0.7;
-  const starts = variant === 3 ? [590, 1005, 1415] : [555, 970, 1385];
+  const starts = variant === 3 ? [560, 955, 1350] : variant === 2 ? [535, 910, 1285] : [540, 915, 1290];
   const body = `
     ${localTape(40, 270, 430, 100, "#879478", -17, 0.7)}
     ${localTape(1320, 1760, 360, 92, "#879478", -18, 0.68)}
@@ -418,17 +428,17 @@ function localQuestionPageSvg(page, variant) {
     ${localPaper(135, 395, 1410, 1505, paperFill, "#d5c4a7", sheetRotate, 0.98)}
     ${ruledLines(245, 520, 1180, 22, 62, "#d5c9b7")}
     ${page.questions.map((question, index) => localQuestionBlock(question, 270, starts[index], {
-      titleSize: 47,
-      optionSize: 39,
-      lineGap: 57,
+      titleSize: 50,
+      optionSize: 41,
+      lineGap: 56,
       rotate: variant === 2 ? -0.2 : -0.4,
     })).join("")}
-    ${variant === 1 ? polaroid(1140, 620, 300, 260, 6, "single") : ""}
+    ${variant === 1 ? stampPhoto(1135, 615, 300, 250, 6, "#bfa77f") : ""}
     ${variant === 2 ? coupleSticker(1185, 515, 1.1, 4) : ""}
     ${variant === 3 ? coupleSticker(1195, 390, 1, 4) : ""}
     ${variant === 1 ? lineSticker(1220, 300, 0.82, 5) : ""}
-    ${variant === 2 ? polaroid(110, 1510, 300, 270, -7, "cool") : ""}
-    ${variant === 3 ? polaroid(1180, 780, 240, 220, 8, "couple") : ""}
+    ${variant === 2 ? stampPhoto(90, 1535, 275, 245, -7, "#9fa794") : ""}
+    ${variant === 3 ? stampPhoto(1190, 760, 230, 205, 8, "#bfa77f") : ""}
     ${localFlower(1280, 1720, 1.08, 18)}
     ${localFlower(100, 1570, 0.92, -20)}
     ${localClip(210, 350, 0.9, -10)}
@@ -448,7 +458,7 @@ function localResultSvg(page) {
     ${localTape(92, 370, 335, 96, "#879478", -18, 0.72)}
     ${localPaper(150, 405, 1380, 1460, "#f7efe1", "#d4c3a6", -0.5, 0.98)}
     ${ruledLines(260, 560, 1160, 18, 64, "#d6cbb8")}
-    ${localQuestionBlock(page.questions[0], 290, 580, { titleSize: 50, optionSize: 43, lineGap: 76, rotate: -0.3 })}
+    ${localQuestionBlock(page.questions[0], 260, 590, { titleSize: 50, optionSize: 43, lineGap: 76, rotate: -0.3 })}
     ${page.results.map((line, index) => {
       const x = 295 + index * 415;
       const [score, result] = line.split("：");
@@ -457,8 +467,8 @@ function localResultSvg(page) {
         ${handText(result, x + 168, 1300, 37, { anchor: "middle", weight: 500, rotate: index === 1 ? 0.5 : -0.6 })}`;
     }).join("")}
     ${coupleSticker(1120, 340, 0.85, 5)}
-    ${lineSticker(1285, 620, 0.8, -3)}
-    ${polaroid(115, 560, 260, 230, -4, "cool")}
+    ${lineSticker(1285, 700, 0.8, -3)}
+    ${stampPhoto(1125, 790, 250, 215, -4, "#9fa794")}
     ${localFlower(92, 1620, 0.9, -12)}
     ${localFlower(1370, 280, 0.82, 12)}
     ${localClip(465, 465, 0.72, 6)}
