@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-19 12:04 preference handwriting polish
+# Regeneration trigger: 2026-05-19 18:35 preference full rebuild
 on:
   push:
     branches:

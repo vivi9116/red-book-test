@@ -7,6 +7,8 @@ const DEFAULT_IMAGE_SIZE = "1680x2240";
 const DEFAULT_TEST_ID = "preference-vs-understanding-like";
 const PHYSICAL_FOLDER = "web/assets/free-tests/physical-vs-psychological-like";
 const PREFERENCE_FOLDER = "web/assets/free-tests/preference-vs-understanding-like";
+const CANVAS_WIDTH = 1680;
+const CANVAS_HEIGHT = 2240;
 
 const rawStyle = `3:4竖版，小红书手帐拼贴风，温暖米色旧纸背景，真实撕纸毛边，翻开的日记本/关系笔记，白边人物贴纸，旧照片拼贴，便签，胶带，回形针，干花，爱心，红笔箭头，铅笔涂鸦。
 整体像“测试日记 / 情绪手帐 / 关系观察笔记”，精致、自然、可以直接发小红书。
@@ -222,6 +224,274 @@ const TESTS = {
     pages: preferencePages,
   },
 };
+
+function localDefs() {
+  return `<defs>
+    <filter id="paperShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#55402f" flood-opacity="0.18"/>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#3d3128" flood-opacity="0.2"/>
+    </filter>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.08"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>`;
+}
+
+function localCanvas(body, bg = "#efe6d8") {
+  return Buffer.from(`<svg width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" viewBox="0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+    ${localDefs()}
+    <rect width="1680" height="2240" fill="${bg}"/>
+    <rect width="1680" height="2240" filter="url(#grain)" opacity="0.55"/>
+    ${body}
+  </svg>`);
+}
+
+function localPaper(x, y, width, height, fill = "#f8f1e3", stroke = "#d4c0a2", rotate = 0, opacity = 0.96) {
+  const body = `<path d="${tornPath(x, y, width, height)}" fill="${fill}" fill-opacity="${opacity}" stroke="${stroke}" stroke-width="3" filter="url(#paperShadow)"/>`;
+  return rotate ? rotateGroup(x, y, width, height, rotate, body) : body;
+}
+
+function localTape(x, y, width, height, fill = "#8a9279", rotate = 0, opacity = 0.78) {
+  const body = `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="3" fill="${fill}" fill-opacity="${opacity}" filter="url(#softShadow)"/>
+    <path d="M${x + 15} ${y} L${x + 15} ${y + height} M${x + 55} ${y} L${x + 55} ${y + height} M${x + 95} ${y} L${x + 95} ${y + height}" stroke="#f2eadc" stroke-width="3" opacity="0.45"/>
+    <path d="M${x} ${y + height / 2} L${x + width} ${y + height / 2}" stroke="#f2eadc" stroke-width="3" opacity="0.45"/>`;
+  return rotate ? rotateGroup(x, y, width, height, rotate, body) : body;
+}
+
+function localClip(x, y, scale = 1, rotate = 0) {
+  const body = `<g transform="translate(${x} ${y}) scale(${scale})">
+    <path d="M16 0 C3 19, 3 54, 18 76 C33 98, 68 94, 76 66 C83 42, 67 20, 46 24 C41 7, 25 -8, 16 0 Z" fill="none" stroke="#6f7467" stroke-width="7" stroke-linecap="round"/>
+    <path d="M35 15 C24 30, 23 57, 35 70 C46 83, 65 74, 64 56 C63 42, 51 32, 42 38" fill="none" stroke="#b6bab0" stroke-width="5" stroke-linecap="round"/>
+  </g>`;
+  return rotate ? `<g transform="rotate(${rotate} ${x} ${y})">${body}</g>` : body;
+}
+
+function localFlower(x, y, scale = 1, rotate = 0) {
+  const body = `<g transform="translate(${x} ${y}) scale(${scale})">
+    <path d="M0 155 C18 98, 14 48, 38 0 M4 112 C-22 82,-18 52,12 40 M16 88 C44 64,58 38,56 5" fill="none" stroke="#9b8262" stroke-width="4" opacity="0.75"/>
+    ${[[-8,105],[16,88],[38,58],[54,8],[8,40]].map(([cx, cy]) => `<circle cx="${cx}" cy="${cy}" r="11" fill="#eee0c4" stroke="#b89c72" stroke-width="2"/>`).join("")}
+  </g>`;
+  return rotate ? `<g transform="rotate(${rotate} ${x} ${y})">${body}</g>` : body;
+}
+
+function localHeart(x, y, size = 36, color = "#a4453d", rotate = 0, opacity = 0.7) {
+  const pathValue = `M ${x} ${y + size * 0.35} C ${x - size * 0.5} ${y - size * 0.1}, ${x - size} ${y + size * 0.55}, ${x} ${y + size} C ${x + size} ${y + size * 0.55}, ${x + size * 0.5} ${y - size * 0.1}, ${x} ${y + size * 0.35}`;
+  return `<path d="${pathValue}" fill="none" stroke="${color}" stroke-width="5" opacity="${opacity}" transform="rotate(${rotate} ${x} ${y})"/>`;
+}
+
+function localArrow(x1, y1, x2, y2, color = "#b2483d") {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const head = 28;
+  const hx1 = x2 - head * Math.cos(angle - Math.PI / 6);
+  const hy1 = y2 - head * Math.sin(angle - Math.PI / 6);
+  const hx2 = x2 - head * Math.cos(angle + Math.PI / 6);
+  const hy2 = y2 - head * Math.sin(angle + Math.PI / 6);
+  return `<path d="M${x1} ${y1} C ${(x1 + x2) / 2} ${y1 - 70}, ${(x1 + x2) / 2} ${y2 + 70}, ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"/>
+    <path d="M${x2} ${y2} L${hx1} ${hy1} M${x2} ${y2} L${hx2} ${hy2}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"/>`;
+}
+
+function ruledLines(x, y, width, count, gap, color = "#cfc5b2") {
+  return Array.from({ length: count }, (_, index) => {
+    const lineY = y + index * gap;
+    return `<path d="M${x} ${lineY} L${x + width} ${lineY}" stroke="${color}" stroke-width="2" opacity="0.52"/>`;
+  }).join("");
+}
+
+function polaroid(x, y, width, height, rotate = 0, variant = "couple") {
+  const innerX = x + 24;
+  const innerY = y + 24;
+  const innerW = width - 48;
+  const innerH = height - 86;
+  const people = variant === "single"
+    ? `<circle cx="${innerX + innerW * 0.52}" cy="${innerY + innerH * 0.36}" r="${innerW * 0.11}" fill="#7b6556"/>
+       <path d="M${innerX + innerW * 0.35} ${innerY + innerH * 0.82} C${innerX + innerW * 0.42} ${innerY + innerH * 0.48},${innerX + innerW * 0.66} ${innerY + innerH * 0.48},${innerX + innerW * 0.72} ${innerY + innerH * 0.82} Z" fill="#d7d0c2"/>`
+    : `<circle cx="${innerX + innerW * 0.38}" cy="${innerY + innerH * 0.42}" r="${innerW * 0.09}" fill="#6f5648"/>
+       <circle cx="${innerX + innerW * 0.62}" cy="${innerY + innerH * 0.40}" r="${innerW * 0.09}" fill="#3f352f"/>
+       <path d="M${innerX + innerW * 0.22} ${innerY + innerH * 0.86} C${innerX + innerW * 0.28} ${innerY + innerH * 0.55},${innerX + innerW * 0.48} ${innerY + innerH * 0.55},${innerX + innerW * 0.52} ${innerY + innerH * 0.86} Z" fill="#d8c4a6"/>
+       <path d="M${innerX + innerW * 0.49} ${innerY + innerH * 0.86} C${innerX + innerW * 0.54} ${innerY + innerH * 0.55},${innerX + innerW * 0.73} ${innerY + innerH * 0.55},${innerX + innerW * 0.79} ${innerY + innerH * 0.86} Z" fill="#aeb8a9"/>`;
+  const body = `<g>
+    <rect x="${x}" y="${y}" width="${width}" height="${height}" fill="#fbf7ef" filter="url(#softShadow)"/>
+    <rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="#c9b08a"/>
+    <rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="${variant === "cool" ? "#8f9a90" : "#d1b78d"}" opacity="0.55"/>
+    <path d="M${innerX} ${innerY + innerH * 0.62} C${innerX + innerW * 0.2} ${innerY + innerH * 0.45},${innerX + innerW * 0.7} ${innerY + innerH * 0.8},${innerX + innerW} ${innerY + innerH * 0.45} L${innerX + innerW} ${innerY + innerH} L${innerX} ${innerY + innerH} Z" fill="#eee0c7" opacity="0.45"/>
+    ${people}
+  </g>`;
+  return rotate ? rotateGroup(x, y, width, height, rotate, body) : body;
+}
+
+function lineSticker(x, y, scale = 1, rotate = 0) {
+  const body = `<g transform="translate(${x} ${y}) scale(${scale})">
+    <path d="M38 178 C30 128,31 75,44 32 C54 0,98 0,108 34 C124 85,120 126,110 178 Z" fill="#fffefa" stroke="#1e1a16" stroke-width="5"/>
+    <circle cx="76" cy="52" r="24" fill="#fffefa" stroke="#1e1a16" stroke-width="5"/>
+    <path d="M64 50 Q75 62 88 50 M64 70 Q76 82 88 70" fill="none" stroke="#1e1a16" stroke-width="4" stroke-linecap="round"/>
+  </g>`;
+  return rotate ? `<g transform="rotate(${rotate} ${x} ${y})">${body}</g>` : body;
+}
+
+function coupleSticker(x, y, scale = 1, rotate = 0) {
+  const body = `<g transform="translate(${x} ${y}) scale(${scale})">
+    <path d="M12 170 L26 76 C32 35,74 30,90 70 L112 170 Z" fill="#fffefa" stroke="#201a16" stroke-width="5"/>
+    <circle cx="58" cy="48" r="28" fill="#fffefa" stroke="#201a16" stroke-width="5"/>
+    <path d="M44 48 Q58 58 72 48" stroke="#201a16" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M112 170 L128 80 C136 38,180 32,194 72 L214 170 Z" fill="#fffefa" stroke="#201a16" stroke-width="5"/>
+    <circle cx="162" cy="50" r="29" fill="#fffefa" stroke="#201a16" stroke-width="5"/>
+    <path d="M149 48 Q162 58 175 48" stroke="#201a16" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>`;
+  return rotate ? `<g transform="rotate(${rotate} ${x} ${y})">${body}</g>` : body;
+}
+
+function coverPersonSticker() {
+  return `<g filter="url(#softShadow)">
+    <path d="M750 1050 C690 1165,690 1390,760 1500 C810 1575,942 1570,1000 1500 C1078 1407,1035 1150,965 1052 C915 980,795 980,750 1050 Z" fill="#fffefa"/>
+    <path d="M790 1120 C735 1235,740 1390,800 1475 C855 1548,930 1538,980 1468 C1032 1390,1000 1210,940 1120 C900 1060,825 1060,790 1120 Z" fill="#aab2a3"/>
+    <circle cx="875" cy="1070" r="82" fill="#efd8c8"/>
+    <path d="M790 1055 C812 950,956 955,975 1068 C920 1038,855 1030,790 1055 Z" fill="#3d302a"/>
+    <rect x="828" y="1246" width="150" height="210" rx="24" fill="#2f3837" transform="rotate(-10 903 1351)"/>
+    <rect x="845" y="1265" width="116" height="165" rx="16" fill="#dfe5dc" transform="rotate(-10 903 1351)"/>
+  </g>`;
+}
+
+function localQuestionBlock(question, x, y, options = {}) {
+  const parsed = splitQuestion(question);
+  const titleSize = options.titleSize ?? 48;
+  const optionSize = options.optionSize ?? 40;
+  const lineGap = options.lineGap ?? 58;
+  const rotate = options.rotate ?? -0.4;
+  return `
+    ${handText(`${parsed.number}. ${parsed.title}`, x, y, titleSize, { weight: 500, rotate })}
+    ${parsed.options.map(([label, value], index) => handText(`${label}. ${value}`, x + 70, y + 72 + index * lineGap, optionSize, { weight: 500, rotate })).join("")}
+  `;
+}
+
+function localTitleStrip(title, y = 230, color = "#c8a575", textColor = "#1f1712") {
+  return `${localPaper(270, y, 1140, 135, color, "#b28a5d", -1, 0.96)}
+    ${handText(title, 840, y + 88, 66, { anchor: "middle", color: textColor, weight: 500, rotate: -1 })}`;
+}
+
+function localFooter(textValue, y = 2010, color = "#f3eee4") {
+  return `${localPaper(250, y, 1180, 125, color, "#d0c4b2", -1, 0.97)}
+    ${handText(textValue, 840, y + 82, 48, { anchor: "middle", weight: 500, rotate: -1 })}`;
+}
+
+function localCoverSvg(page) {
+  const body = `
+    ${localTape(85, 180, 380, 108, "#8c977e", -11, 0.72)}
+    ${localTape(1185, 68, 360, 70, "#b5a98d", 2, 0.45)}
+    ${preferenceBrand()}
+    ${localPaper(245, 235, 1190, 590, "#fff1bf", "#e0c785", -1, 0.98)}
+    ${handText(page.title[0], 840, 410, 92, { anchor: "middle", weight: 500, rotate: -1 })}
+    ${handText(page.title[1], 840, 570, 102, { anchor: "middle", weight: 500, rotate: -1 })}
+    ${handText(page.title[2], 840, 725, 102, { anchor: "middle", weight: 500, rotate: -1 })}
+    ${localPaper(610, 850, 460, 110, "#d5b47e", "#b79260", -2, 0.96)}
+    ${handText(page.badge, 840, 924, 54, { anchor: "middle", weight: 500, rotate: -2 })}
+    ${polaroid(180, 1125, 370, 335, -6, "couple")}
+    ${polaroid(1135, 1110, 360, 320, 5, "cool")}
+    ${coverPersonSticker()}
+    ${localFlower(640, 1060, 1.05, -12)}
+    ${localArrow(1245, 1010, 1365, 930)}
+    ${localHeart(260, 1515, 54, -15, 0.78)}
+    ${localClip(1080, 930, 0.85, 4)}
+    ${localFooter(page.footer, 1945, "#f4ecdf")}
+    ${localFlower(1288, 1882, 0.75, 18)}
+    ${localTape(145, 2110, 450, 72, "#8c977e", -2, 0.55)}
+  `;
+  return localCanvas(body, "#efe8d8");
+}
+
+function localQuestionPageSvg(page, variant) {
+  const bg = variant === 2 ? "#d7dccf" : variant === 3 ? "#e2e0d9" : "#efe6d6";
+  const titleColor = variant === 3 ? "#f8f4ea" : "#c7a174";
+  const paperFill = variant === 2 ? "#fbf7ec" : "#f5eddf";
+  const sheetRotate = variant === 2 ? -0.5 : variant === 3 ? 1.2 : -0.7;
+  const starts = variant === 3 ? [590, 1005, 1415] : [555, 970, 1385];
+  const body = `
+    ${localTape(40, 270, 430, 100, "#879478", -17, 0.7)}
+    ${localTape(1320, 1760, 360, 92, "#879478", -18, 0.68)}
+    ${preferenceBrand()}
+    ${localTitleStrip(page.title, 220, titleColor, variant === 3 ? "#1f1712" : "#241b15")}
+    ${localPaper(135, 395, 1410, 1505, paperFill, "#d5c4a7", sheetRotate, 0.98)}
+    ${ruledLines(245, 520, 1180, 22, 62, "#d5c9b7")}
+    ${page.questions.map((question, index) => localQuestionBlock(question, 270, starts[index], {
+      titleSize: 47,
+      optionSize: 39,
+      lineGap: 57,
+      rotate: variant === 2 ? -0.2 : -0.4,
+    })).join("")}
+    ${variant === 1 ? polaroid(1140, 620, 300, 260, 6, "single") : ""}
+    ${variant === 2 ? coupleSticker(1185, 515, 1.1, 4) : ""}
+    ${variant === 3 ? coupleSticker(1195, 390, 1, 4) : ""}
+    ${variant === 1 ? lineSticker(1220, 300, 0.82, 5) : ""}
+    ${variant === 2 ? polaroid(110, 1510, 300, 270, -7, "cool") : ""}
+    ${variant === 3 ? polaroid(1180, 780, 240, 220, 8, "couple") : ""}
+    ${localFlower(1280, 1720, 1.08, 18)}
+    ${localFlower(100, 1570, 0.92, -20)}
+    ${localClip(210, 350, 0.9, -10)}
+    ${localClip(1405, 300, 0.65, 12)}
+    ${localArrow(1515, 850, 1415, 720)}
+    ${localHeart(1270, 1510, 44, 18, 0.48)}
+    ${localHeart(450, 845, 34, -8, 0.46)}
+    ${localFooter(page.footer, 2010, variant === 2 ? "#d6b482" : "#f1e9dc")}
+  `;
+  return localCanvas(body, bg);
+}
+
+function localResultSvg(page) {
+  const body = `
+    ${preferenceBrand()}
+    ${localTitleStrip(page.title, 210, "#838b73", "#f9f2e6")}
+    ${localTape(92, 370, 335, 96, "#879478", -18, 0.72)}
+    ${localPaper(150, 405, 1380, 1460, "#f7efe1", "#d4c3a6", -0.5, 0.98)}
+    ${ruledLines(260, 560, 1160, 18, 64, "#d6cbb8")}
+    ${localQuestionBlock(page.questions[0], 290, 580, { titleSize: 50, optionSize: 43, lineGap: 76, rotate: -0.3 })}
+    ${page.results.map((line, index) => {
+      const x = 295 + index * 415;
+      const [score, result] = line.split("：");
+      return `${localPaper(x, 1135, 335, 260, "#eee5d4", "#d1bea0", index === 1 ? 0.5 : -0.6, 0.98)}
+        ${handText(`${score}：`, x + 168, 1240, 37, { anchor: "middle", weight: 500, rotate: index === 1 ? 0.5 : -0.6 })}
+        ${handText(result, x + 168, 1300, 37, { anchor: "middle", weight: 500, rotate: index === 1 ? 0.5 : -0.6 })}`;
+    }).join("")}
+    ${coupleSticker(1120, 340, 0.85, 5)}
+    ${lineSticker(1285, 620, 0.8, -3)}
+    ${polaroid(115, 560, 260, 230, -4, "cool")}
+    ${localFlower(92, 1620, 0.9, -12)}
+    ${localFlower(1370, 280, 0.82, 12)}
+    ${localClip(465, 465, 0.72, 6)}
+    ${localClip(120, 1950, 0.75, -8)}
+    ${localArrow(1245, 930, 1165, 1035)}
+    ${localPaper(215, 1845, 1250, 210, "#838b73", "#6f765f", -0.5, 0.98)}
+    ${handText(page.footer[0], 840, 1940, 50, { anchor: "middle", color: "#fbf4e8", weight: 500, rotate: -0.5 })}
+    ${handText(page.footer[1], 840, 2020, 48, { anchor: "middle", color: "#fbf4e8", weight: 500, rotate: -0.5 })}
+  `;
+  return localCanvas(body, "#ece7de");
+}
+
+async function renderLocalPreferenceCarousel(folder) {
+  const sharp = (await import("sharp")).default;
+  await mkdir(folder, { recursive: true });
+  const pages = new Map(preferencePages.map((page) => [page.file, page]));
+  const outputs = [
+    ["01-cover.png", localCoverSvg(pages.get("01-cover.png"))],
+    ["02-q1-3.png", localQuestionPageSvg(pages.get("02-q1-3.png"), 1)],
+    ["03-q4-6.png", localQuestionPageSvg(pages.get("03-q4-6.png"), 2)],
+    ["04-q7-9.png", localQuestionPageSvg(pages.get("04-q7-9.png"), 3)],
+    ["05-q10-result.png", localResultSvg(pages.get("05-q10-result.png"))],
+  ];
+  for (const [file, input] of outputs) {
+    await sharp(input).png().toFile(path.join(folder, file));
+    console.log(`Rendered ${file}`);
+  }
+  await writeFile(
+    path.join(folder, "image-prompts.md"),
+    "# 确定性手帐重做版\n\n这套图片不再使用豆包底图续修，改为程序直接生成完整手帐版式，避免正文和图片不融合、随机压字和错字。\n",
+    "utf8"
+  );
+}
 
 function loadLocalEnv() {
   for (const file of [".env.local", ".env"]) {
@@ -546,6 +816,11 @@ async function main() {
   const testId = process.argv[2] || DEFAULT_TEST_ID;
   const config = TESTS[testId];
   if (!config) throw new Error(`Unknown free test id: ${testId}`);
+
+  if (testId === "preference-vs-understanding-like") {
+    await renderLocalPreferenceCarousel(config.folder);
+    return;
+  }
 
   await mkdir(config.folder, { recursive: true });
   await writeFile(
