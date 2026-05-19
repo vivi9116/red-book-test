@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-19 18:50 preference rebuild layout fix
+# Regeneration trigger: 2026-05-19 19:10 preference doubao native remake
 on:
   push:
     branches:
