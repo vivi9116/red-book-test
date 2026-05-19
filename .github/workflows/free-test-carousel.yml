@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-18 22:45 avoid awkward answer character in footer
+# Regeneration trigger: 2026-05-19 10:20 preference vs understanding free test
 on:
   push:
     branches:
@@ -8,14 +8,13 @@ on:
     paths:
       - ".github/workflows/free-test-carousel.yml"
       - "scripts/generate_free_test_carousel_assets.mjs"
-      - "web/assets/free-tests/physical-vs-psychological-like/copy.md"
-      - "web/assets/free-tests/physical-vs-psychological-like/image-prompts.md"
+      - "web/assets/free-tests/**"
   workflow_dispatch:
     inputs:
       test_id:
         description: "Free test id"
         required: false
-        default: "physical-vs-psychological-like"
+        default: "preference-vs-understanding-like"
 
 permissions:
   contents: write
