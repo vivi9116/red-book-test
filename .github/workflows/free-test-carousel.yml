@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-19 11:05 preference integrated card redesign
+# Regeneration trigger: 2026-05-19 11:46 preference old-letter layout
 on:
   push:
     branches:
