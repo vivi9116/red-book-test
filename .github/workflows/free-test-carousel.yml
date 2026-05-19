@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-19 11:46 preference old-letter layout
+# Regeneration trigger: 2026-05-19 12:04 preference handwriting polish
 on:
   push:
     branches:
@@ -37,7 +37,7 @@ jobs:
       - name: Install Chinese fonts
         run: |
           sudo apt-get update
-          sudo apt-get install -y fonts-noto-cjk
+          sudo apt-get install -y fonts-noto-cjk fonts-arphic-ukai fonts-arphic-uming
 
       - name: Install image composer
         run: npm install sharp@0.33.5

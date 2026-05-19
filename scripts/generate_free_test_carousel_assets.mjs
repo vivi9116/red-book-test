@@ -263,7 +263,7 @@ function text(value, x, y, size, options = {}) {
 
 function handText(value, x, y, size, options = {}) {
   return text(value, x, y, size, {
-    family: "'Noto Serif CJK SC', 'KaiTi', 'STKaiti', 'Microsoft YaHei', serif",
+    family: "'AR PL UKai CN', 'AR PL UMing CN', 'KaiTi', 'STKaiti', 'Noto Serif CJK SC', serif",
     color: "#1f1712",
     weight: 500,
     ...options,
@@ -437,9 +437,9 @@ function preferenceQuestionsOverlay(page) {
       { x: 260, y: 1400, rotate: -0.2 },
     ],
     "preference-questions-ticket": [
-      { x: 270, y: 565, rotate: -0.3 },
-      { x: 270, y: 970, rotate: 0.3 },
-      { x: 270, y: 1380, rotate: -0.2 },
+      { x: 335, y: 655, rotate: -0.3 },
+      { x: 285, y: 1040, rotate: 0.3 },
+      { x: 285, y: 1415, rotate: -0.2 },
     ],
   };
   const specs = variants[page.layout] ?? variants["preference-questions"];
@@ -453,7 +453,11 @@ function preferenceQuestionsOverlay(page) {
 }
 
 function preferenceResultCard(line, x, y, rotate) {
-  return handText(line, x, y, 39, { anchor: "middle", weight: 500, rotate });
+  const [score, result] = line.split("：");
+  return `
+    ${handText(`${score}：`, x, y, 38, { anchor: "middle", weight: 500, rotate })}
+    ${handText(result, x, y + 62, 38, { anchor: "middle", weight: 500, rotate })}
+  `;
 }
 
 function preferenceResultOverlay(page) {
@@ -463,9 +467,9 @@ function preferenceResultOverlay(page) {
     ${preferenceBrand()}
     ${preferenceTitle(page)}
     ${preferencePlainQuestion(page.questions[0], questionSpec)}
-    ${preferenceResultCard(page.results[0], 440, 1515, -0.6)}
-    ${preferenceResultCard(page.results[1], 840, 1515, 0.4)}
-    ${preferenceResultCard(page.results[2], 1240, 1515, -0.4)}
+    ${preferenceResultCard(page.results[0], 430, 1230, -0.6)}
+    ${preferenceResultCard(page.results[1], 840, 1230, 0.4)}
+    ${preferenceResultCard(page.results[2], 1250, 1230, -0.4)}
     ${handText(page.footer[0], 840, 1940, 52, { anchor: "middle", color: "#f8f0df", weight: 500, rotate: -1 })}
     ${handText(page.footer[1], 840, 2025, 46, { anchor: "middle", color: "#f8f0df", weight: 500, rotate: -1 })}
   `;
