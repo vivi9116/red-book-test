@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-20 02:26 preference native typo retry
+# Regeneration trigger: 2026-05-20 03:03 preference q4 wording retry
 on:
   push:
     branches:
