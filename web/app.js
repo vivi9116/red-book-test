@@ -223,7 +223,7 @@ function renderPreviewBoard() {
 function renderIntro() {
   document.title = activeTest.title;
   eyebrow.textContent = activeTest.badge;
-  title.textContent = "开始 36 题测试";
+  title.textContent = activeTest.id === "boundary-pattern" ? "解锁你的专属边界报告" : "开始 36 题测试";
   subtitle.textContent = activeTest.subtitle;
   previewList.innerHTML = activeTest.previewModules
     .map((item) => `<span>${escapeHtml(item)}</span>`)
@@ -423,20 +423,25 @@ function renderVisualPreview(testConfig) {
       title: "你的关系边界线报告",
       note: "boundary map",
       html: `
-        <div class="boundary-hero-card">
+        <div class="boundary-hero-card" aria-label="边界感付费报告预览">
+          <figure class="boundary-report-image">
+            <img src="./assets/boundary-pattern/report-preview.png" alt="边界感模式测试报告预览图" loading="lazy">
+          </figure>
           <div class="boundary-report-copy">
             <span>36 题边界感报告</span>
             <strong>不是让你变冷<br>而是把自己放回关系里</strong>
-            <small>请求 / 愧疚 / 冲突 / 自我空间</small>
+            <small>看见你在请求、愧疚、冲突和自我空间里的边界模式</small>
             <div class="boundary-proof-tags">
               <b>过度承担</b>
               <b>愧疚退让</b>
               <b>温和拒绝</b>
             </div>
           </div>
-          <figure class="boundary-report-image">
-            <img src="./assets/boundary-pattern/report-preview.png" alt="边界感模式测试报告预览图" loading="lazy">
-          </figure>
+          <div class="boundary-thread-note">
+            <span>付费报告会看到</span>
+            <strong>你的边界最容易从哪里松掉</strong>
+            <small>主类型 / 副倾向 / 触发场景 / 第一步练习</small>
+          </div>
         </div>
       `,
     };
