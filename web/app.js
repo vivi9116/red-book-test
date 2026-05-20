@@ -423,28 +423,21 @@ function renderVisualPreview(testConfig) {
       title: "你的关系边界线报告",
       note: "boundary map",
       html: `
-        <div class="boundary-collage" aria-hidden="true">
-          <figure class="boundary-photo boundary-photo-cover">
-            <img src="./assets/boundary-pattern/cover.png" alt="" loading="lazy">
-          </figure>
-          <figure class="boundary-photo boundary-photo-long">
-            <img src="./assets/boundary-pattern/long-image.png" alt="" loading="lazy">
-          </figure>
-          <div class="boundary-scrap-note">
-            <span>关系红线</span>
-            <strong>不是所有请求<br>都要立刻接住</strong>
+        <div class="boundary-hero-card">
+          <div class="boundary-report-copy">
+            <span>36 题边界感报告</span>
+            <strong>不是让你变冷<br>而是把自己放回关系里</strong>
             <small>请求 / 愧疚 / 冲突 / 自我空间</small>
+            <div class="boundary-proof-tags">
+              <b>过度承担</b>
+              <b>愧疚退让</b>
+              <b>温和拒绝</b>
+            </div>
           </div>
-          <div class="boundary-ribbon-note">边界不是变冷，是把自己放回关系里</div>
-          <div class="boundary-stamp">付费报告预览</div>
-          <div class="boundary-mini-tags">
-            <span>过度承担</span>
-            <span>愧疚退让</span>
-            <span>温和拒绝</span>
-          </div>
+          <figure class="boundary-report-image">
+            <img src="./assets/boundary-pattern/report-preview.png" alt="边界感模式测试报告预览图" loading="lazy">
+          </figure>
         </div>
-        <span class="xhs-sticker sticker-boundary" aria-hidden="true">red line journal</span>
-        <span class="doodle-star star-one" aria-hidden="true">✦</span>
       `,
     };
   }
