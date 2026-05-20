@@ -423,29 +423,27 @@ function renderVisualPreview(testConfig) {
       title: "你的关系边界线报告",
       note: "boundary map",
       html: `
-        <div class="boundary-door" aria-hidden="true">
-          <span class="door-panel"></span>
-          <span class="door-sign">我的空间</span>
-          <i></i>
+        <div class="boundary-collage" aria-hidden="true">
+          <figure class="boundary-photo boundary-photo-cover">
+            <img src="./assets/boundary-pattern/cover.png" alt="" loading="lazy">
+          </figure>
+          <figure class="boundary-photo boundary-photo-long">
+            <img src="./assets/boundary-pattern/long-image.png" alt="" loading="lazy">
+          </figure>
+          <div class="boundary-scrap-note">
+            <span>关系红线</span>
+            <strong>不是所有请求<br>都要立刻接住</strong>
+            <small>请求 / 愧疚 / 冲突 / 自我空间</small>
+          </div>
+          <div class="boundary-ribbon-note">边界不是变冷，是把自己放回关系里</div>
+          <div class="boundary-stamp">付费报告预览</div>
+          <div class="boundary-mini-tags">
+            <span>过度承担</span>
+            <span>愧疚退让</span>
+            <span>温和拒绝</span>
+          </div>
         </div>
-        <div class="boundary-redline" aria-hidden="true">
-          <b>不方便</b>
-          <span></span>
-          <b>我需要想一下</b>
-        </div>
-        <div class="boundary-notes" aria-hidden="true">
-          <span>过度承担</span>
-          <span>愧疚退让</span>
-          <span>温和拒绝</span>
-        </div>
-        <div class="boundary-ruler" aria-hidden="true">
-          <span>我</span><i></i><span>关系</span><i></i><span>别人</span>
-        </div>
-        <div class="crossed-list" aria-hidden="true">
-          <strong>不是都要我来接住</strong>
-          <p>请求 / 愧疚 / 冲突 / 自我空间</p>
-        </div>
-        <span class="xhs-sticker sticker-boundary" aria-hidden="true">red line</span>
+        <span class="xhs-sticker sticker-boundary" aria-hidden="true">red line journal</span>
         <span class="doodle-star star-one" aria-hidden="true">✦</span>
       `,
     };
