@@ -38,6 +38,21 @@ jobs:
           const path = require("node:path");
 
           const prompts = {
+            "boundary-pattern": {
+              folder: "web/assets/boundary-pattern",
+              preview: `生成一张横版 16:9 的付费测试网页首屏视觉图，主题是“边界感模式测试 / 关系边界线报告”。
+必须是高级小红书手帐拼贴风，不是网页 UI，不是扁平插画，不是线框示意图，不是简单代码画出来的图。
+画面需要有真实视觉质感：
+1. 温暖米色旧纸桌面背景，有真实纸张纹理、阴影、撕纸毛边。
+2. 中心是翻开的旧日记本或关系观察本，纸面自然、有横线、有旧书边缘。
+3. 一个女生背影纸片剪贴站在本子前，像贴纸一样有白边，低饱和橄榄绿衣服。
+4. 有一扇半开的绿色门，象征“我的空间”；有一条豆沙红手绘红线穿过画面，象征边界线。
+5. 四周有空白便签、旧照片边框、胶带、回形针、干花、爱心、箭头、铅笔涂鸦，层次丰富但不乱。
+6. 留出左侧和下方几块干净纸面区域，方便后续网页叠加准确中文标题。
+色彩：温暖米色旧纸、豆沙红、橄榄绿、奶油黄、浅棕色，低饱和，高级精致。
+质感：真实纸张拼贴、撕纸毛边、复古手帐、情绪日记、关系观察笔记、光影柔和。
+禁止：不要可读中文文字，不要可读英文文字，不要网页按钮，不要现代 UI 卡片，不要科技感，不要空白大背景，不要水印。`,
+            },
             "attachment-pattern": {
               folder: "web/assets/attachment-pattern",
               cover: `生成一张 3:4 竖版小红书封面图，主题是“亲密关系依恋模式测试”。
@@ -113,14 +128,19 @@ jobs:
           const testId = process.env.TEST_ID || "attachment-pattern";
           const item = prompts[testId];
           if (!item) throw new Error(`Unknown test id: ${testId}`);
-          await requestImage(item.cover, path.join(item.folder, "cover.png"));
-          await requestImage(item.long, path.join(item.folder, "long-image.png"));
+          if (item.cover) await requestImage(item.cover, path.join(item.folder, "cover.png"));
+          if (item.long) await requestImage(item.long, path.join(item.folder, "long-image.png"));
+          if (item.preview) await requestImage(item.preview, path.join(item.folder, "report-preview.png"));
           NODE
 
       - name: Verify generated files
         run: |
-          test -s web/assets/${{ github.event.inputs.test_id }}/cover.png
-          test -s web/assets/${{ github.event.inputs.test_id }}/long-image.png
+          if [ "${{ github.event.inputs.test_id }}" = "boundary-pattern" ]; then
+            test -s web/assets/${{ github.event.inputs.test_id }}/report-preview.png
+          else
+            test -s web/assets/${{ github.event.inputs.test_id }}/cover.png
+            test -s web/assets/${{ github.event.inputs.test_id }}/long-image.png
+          fi
 
       - name: Upload generated assets
         uses: actions/upload-artifact@v4
@@ -129,13 +149,14 @@ jobs:
           path: |
             web/assets/${{ github.event.inputs.test_id }}/cover.png
             web/assets/${{ github.event.inputs.test_id }}/long-image.png
+            web/assets/${{ github.event.inputs.test_id }}/report-preview.png
 
       - name: Commit generated assets
         if: ${{ github.event.inputs.commit_assets == 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/assets/${{ github.event.inputs.test_id }}/cover.png web/assets/${{ github.event.inputs.test_id }}/long-image.png
+          git add web/assets/${{ github.event.inputs.test_id }}
           if git diff --cached --quiet; then
             echo "No generated asset changes to commit."
           else
