@@ -1262,6 +1262,191 @@ h3 {
   transform: rotate(-7deg);
 }
 
+.boundary-lines-preview {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, var(--color-secondary) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(145deg, rgba(255, 252, 246, 0.94), rgba(245, 238, 226, 0.96));
+  background-size: 28px 28px, 28px 28px, auto;
+}
+
+.boundary-lines-preview::after {
+  content: "boundary map";
+  color: color-mix(in srgb, var(--color-primary) 50%, transparent);
+  font-family: "Segoe Print", "Comic Sans MS", cursive;
+  font-size: 16px;
+}
+
+.boundary-door {
+  position: absolute;
+  left: 8px;
+  top: 10px;
+  width: min(245px, 42%);
+  height: 176px;
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 28%, transparent);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.34), transparent 50%),
+    color-mix(in srgb, var(--color-secondary) 18%, white);
+  box-shadow: 0 16px 28px rgba(47, 51, 45, 0.1);
+  transform: rotate(-2deg);
+}
+
+.door-panel {
+  position: absolute;
+  inset: 20px 24px;
+  border: 2px solid color-mix(in srgb, var(--color-secondary) 34%, transparent);
+  border-radius: 6px;
+}
+
+.door-panel::after {
+  content: "";
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.door-sign {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.boundary-door i {
+  position: absolute;
+  left: -14px;
+  bottom: 22px;
+  width: 150px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transform: rotate(-5deg);
+}
+
+.boundary-redline {
+  position: absolute;
+  left: min(270px, 46%);
+  right: 8px;
+  top: 34px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.boundary-redline span {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 20%, transparent));
+}
+
+.boundary-notes {
+  position: absolute;
+  left: min(280px, 48%);
+  top: 78px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: min(410px, 50%);
+}
+
+.boundary-notes span {
+  min-height: 74px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
+  border-radius: 8px;
+  padding: 12px 10px;
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 10px 18px rgba(47, 51, 45, 0.08);
+}
+
+.boundary-notes span:nth-child(2) {
+  background: color-mix(in srgb, var(--color-primary) 12%, white);
+  transform: rotate(2deg);
+}
+
+.boundary-notes span:nth-child(3) {
+  background: color-mix(in srgb, var(--color-secondary) 14%, white);
+  transform: rotate(-2deg);
+}
+
+.boundary-ruler {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 48px;
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.boundary-ruler i {
+  height: 8px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(90deg, var(--color-primary) 0 10px, color-mix(in srgb, var(--color-primary) 18%, white) 10px 18px);
+}
+
+.crossed-list {
+  position: absolute;
+  left: 36px;
+  right: 54px;
+  bottom: 80px;
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.74);
+  transform: rotate(-1deg);
+}
+
+.crossed-list::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 24px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transform: rotate(-2deg);
+}
+
+.crossed-list strong {
+  display: block;
+  font-size: 15px;
+}
+
+.crossed-list p {
+  margin: 8px 0 0;
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.sticker-boundary {
+  right: 22px;
+  bottom: 74px;
+  color: color-mix(in srgb, var(--color-primary) 52%, transparent);
+}
+
 .test-panel {
   overflow: hidden;
 }
@@ -1737,6 +1922,34 @@ ol {
     repeating-linear-gradient(-6deg, rgba(57, 127, 138, 0.04) 0 1px, transparent 1px 13px);
 }
 
+.boundary-theme {
+  --color-background: #f4efe6;
+  --color-surface: #fff8f1;
+  --color-primary: #a8564a;
+  --color-secondary: #6f7f63;
+  --color-ink: #2f332d;
+  --color-muted: #757066;
+  --color-danger: #9b4a42;
+  --color-repair: #557c6b;
+  --line: rgba(92, 76, 60, 0.18);
+  --panel: rgba(255, 248, 241, 0.9);
+  --shadow: 0 18px 48px rgba(47, 51, 45, 0.13);
+  background:
+    linear-gradient(90deg, rgba(168, 86, 74, 0.052) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(111, 127, 99, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 16% 16%, rgba(168, 86, 74, 0.14), transparent 28%),
+    linear-gradient(135deg, #f6efe5, #eef3e8);
+  background-size: 32px 32px, 32px 32px, auto, auto;
+}
+
+.boundary-theme .test-panel,
+.boundary-theme .preview-board,
+.boundary-theme .test-catalog {
+  background:
+    linear-gradient(135deg, rgba(255, 248, 241, 0.96), rgba(246, 240, 230, 0.92)),
+    repeating-linear-gradient(-6deg, rgba(168, 86, 74, 0.04) 0 1px, transparent 1px 13px);
+}
+
 @media (max-width: 760px) {
   .topbar::before,
   .topbar::after,
@@ -1880,8 +2093,55 @@ ol {
   }
 
   .recovery-steps,
-  .sticker-journal {
+  .sticker-journal,
+  .sticker-boundary {
     display: none;
+  }
+
+  .boundary-lines-preview {
+    min-height: 330px;
+  }
+
+  .boundary-lines-preview .visual-content {
+    min-height: 235px;
+  }
+
+  .boundary-door {
+    width: 52%;
+    height: 146px;
+  }
+
+  .boundary-redline {
+    left: 48%;
+    top: 24px;
+    grid-template-columns: 1fr;
+  }
+
+  .boundary-redline span {
+    width: 100%;
+  }
+
+  .boundary-notes {
+    left: 44%;
+    top: 84px;
+    grid-template-columns: 1fr;
+    width: 52%;
+  }
+
+  .boundary-notes span {
+    min-height: 42px;
+    padding: 8px 10px;
+  }
+
+  .boundary-notes span:nth-child(n + 3),
+  .boundary-ruler {
+    display: none;
+  }
+
+  .crossed-list {
+    left: 10px;
+    right: 10px;
+    bottom: 22px;
   }
 
   .report-overview,

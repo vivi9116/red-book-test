@@ -1,13 +1,15 @@
 import { scoreTest } from "./test-engine.js";
 import { attachmentPatternTest } from "./tests/attachment-pattern.js";
+import { boundaryPatternTest } from "./tests/boundary-pattern.js";
 import { emotionalBurnoutPatternTest } from "./tests/emotional-burnout-pattern.js";
 import { familyOriginPatternTest } from "./tests/family-origin-pattern.js";
 
-const availableTests = [attachmentPatternTest, familyOriginPatternTest, emotionalBurnoutPatternTest];
+const availableTests = [attachmentPatternTest, familyOriginPatternTest, emotionalBurnoutPatternTest, boundaryPatternTest];
 const testsById = {
   "attachment-pattern": attachmentPatternTest,
   "family-origin-pattern": familyOriginPatternTest,
   "emotional-burnout-pattern": emotionalBurnoutPatternTest,
+  "boundary-pattern": boundaryPatternTest,
 };
 
 const query = new URLSearchParams(window.location.search);
@@ -64,7 +66,7 @@ if (activeTest) {
   renderPreviewBoard();
   renderIntro();
 } else {
-  document.body.classList.remove("has-active-test", "family-theme", "relationship-theme", "journal-theme");
+  document.body.classList.remove("has-active-test", "family-theme", "relationship-theme", "journal-theme", "boundary-theme");
   renderCatalog();
 }
 
@@ -402,6 +404,7 @@ function applyTheme(testConfig) {
   document.body.classList.toggle("family-theme", testConfig.id === "family-origin-pattern");
   document.body.classList.toggle("relationship-theme", testConfig.id === "attachment-pattern");
   document.body.classList.toggle("journal-theme", testConfig.id === "emotional-burnout-pattern");
+  document.body.classList.toggle("boundary-theme", testConfig.id === "boundary-pattern");
   root.dataset.theme = testConfig.theme.name;
   root.style.setProperty("--color-background", colors.background);
   root.style.setProperty("--color-surface", colors.surface);
@@ -414,6 +417,40 @@ function applyTheme(testConfig) {
 }
 
 function renderVisualPreview(testConfig) {
+  if (testConfig.layoutVariant === "boundary-lines") {
+    return {
+      className: "boundary-lines-preview",
+      title: "你的关系边界线报告",
+      note: "boundary map",
+      html: `
+        <div class="boundary-door" aria-hidden="true">
+          <span class="door-panel"></span>
+          <span class="door-sign">我的空间</span>
+          <i></i>
+        </div>
+        <div class="boundary-redline" aria-hidden="true">
+          <b>不方便</b>
+          <span></span>
+          <b>我需要想一下</b>
+        </div>
+        <div class="boundary-notes" aria-hidden="true">
+          <span>过度承担</span>
+          <span>愧疚退让</span>
+          <span>温和拒绝</span>
+        </div>
+        <div class="boundary-ruler" aria-hidden="true">
+          <span>我</span><i></i><span>关系</span><i></i><span>别人</span>
+        </div>
+        <div class="crossed-list" aria-hidden="true">
+          <strong>不是都要我来接住</strong>
+          <p>请求 / 愧疚 / 冲突 / 自我空间</p>
+        </div>
+        <span class="xhs-sticker sticker-boundary" aria-hidden="true">red line</span>
+        <span class="doodle-star star-one" aria-hidden="true">✦</span>
+      `,
+    };
+  }
+
   if (testConfig.layoutVariant === "journal-dashboard") {
     return {
       className: "journal-dashboard-preview",
@@ -563,6 +600,12 @@ function getPreviewModules(testConfig) {
       "看见哪些场景最容易偷走你的情绪电量",
       "用能量仪表理解身体提醒，而不是继续责备自己",
       "从一个可执行的小恢复动作开始降低内耗",
+    ],
+    "boundary-pattern": [
+      "看见你最容易在请求、愧疚或冲突里松开的边界线",
+      "分清善良、责任和过度承担之间的细微差别",
+      "找到你是先退让、先忍住，还是最后筑起高墙",
+      "给你一句能真实说出口的温和边界练习",
     ],
   };
   const descriptions = descriptionsById[testConfig.id] ?? [];
