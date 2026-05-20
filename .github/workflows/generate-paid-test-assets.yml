@@ -1,6 +1,11 @@
 name: Generate Paid Test Assets
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/generate-paid-test-assets.yml"
   workflow_dispatch:
     inputs:
       test_id:
@@ -14,6 +19,9 @@ on:
 
 permissions:
   contents: write
+
+env:
+  GENERATED_TEST_ID: ${{ github.event.inputs.test_id || 'boundary-pattern' }}
 
 jobs:
   generate:
@@ -31,7 +39,7 @@ jobs:
           ARK_BASE_URL: ${{ vars.ARK_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3' }}
           DOUBAO_IMAGE_MODEL: ${{ vars.DOUBAO_IMAGE_MODEL || 'doubao-seedream-4-0-250828' }}
           ARK_IMAGE_SIZE: ${{ vars.ARK_IMAGE_SIZE || '1024x1536' }}
-          TEST_ID: ${{ github.event.inputs.test_id }}
+          TEST_ID: ${{ env.GENERATED_TEST_ID }}
         run: |
           node <<'NODE'
           const fs = require("node:fs/promises");
@@ -135,28 +143,28 @@ jobs:
 
       - name: Verify generated files
         run: |
-          if [ "${{ github.event.inputs.test_id }}" = "boundary-pattern" ]; then
-            test -s web/assets/${{ github.event.inputs.test_id }}/report-preview.png
+          if [ "$GENERATED_TEST_ID" = "boundary-pattern" ]; then
+            test -s web/assets/$GENERATED_TEST_ID/report-preview.png
           else
-            test -s web/assets/${{ github.event.inputs.test_id }}/cover.png
-            test -s web/assets/${{ github.event.inputs.test_id }}/long-image.png
+            test -s web/assets/$GENERATED_TEST_ID/cover.png
+            test -s web/assets/$GENERATED_TEST_ID/long-image.png
           fi
 
       - name: Upload generated assets
         uses: actions/upload-artifact@v4
         with:
-          name: paid-test-assets-${{ github.event.inputs.test_id }}
+          name: paid-test-assets-${{ env.GENERATED_TEST_ID }}
           path: |
-            web/assets/${{ github.event.inputs.test_id }}/cover.png
-            web/assets/${{ github.event.inputs.test_id }}/long-image.png
-            web/assets/${{ github.event.inputs.test_id }}/report-preview.png
+            web/assets/${{ env.GENERATED_TEST_ID }}/cover.png
+            web/assets/${{ env.GENERATED_TEST_ID }}/long-image.png
+            web/assets/${{ env.GENERATED_TEST_ID }}/report-preview.png
 
       - name: Commit generated assets
-        if: ${{ github.event.inputs.commit_assets == 'true' }}
+        if: ${{ github.event_name == 'push' || github.event.inputs.commit_assets == 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/assets/${{ github.event.inputs.test_id }}
+          git add web/assets/$GENERATED_TEST_ID
           if git diff --cached --quiet; then
             echo "No generated asset changes to commit."
           else
