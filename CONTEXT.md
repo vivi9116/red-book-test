@@ -6,6 +6,8 @@
 
 用户先要求“重新做”边界感测试网页，随后明确要求“按之前的排版来，只是 UI 精美一点”。已改回之前的结构：上方左文案右图片的报告预览、下方四个报告点、再下方开始 36 题测试；只提升边框、纸张、图片融合、按钮和卡片细节。用户指出右图空白太多、手机文字框遮挡底图；已放大并右移图片裁切，手机端改为上文字下图片，不再遮挡底图。
 
+已把兑换码 `76DE56-F18D28` 写入 Notion 付费测试兑换码库，绑定 `boundary-pattern`，状态为 `固定码`。同时补齐 Vercel Production 的 Notion 兑换码库环境变量，并用空提交触发重新部署；线上 `/api/redeem` 已验证返回 `provider: notion`、`reusable: true`。
+
 # 关键决定
 
 只改 `boundary-pattern` 的页面结构和样式，不改 `family-origin-pattern` 与 `attachment-pattern` 的测试配置、入口和素材。
