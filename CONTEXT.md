@@ -10,6 +10,8 @@
 
 已按用户最新要求重做小红书图文：图片中文字和画面由图片模型一次生成，不再采用“先出底图、再用程序压文字”的方式。交付文件为 `web/assets/boundary-pattern/cover.png`、`long-image.png`、`cover-copy.md`、`long-copy.md`，两张图片尺寸均为 1080x1440。
 
+用户指出之前亲密关系依恋测试的小红书文案是完整商品素材格式，本次边界感不应被简化。已把 `cover-copy.md` 改回完整结构：封面标题、副标题、角标、小红书发布标题、备选封面标题、商品标题、商品文案、封面图说明和标签；同步更新经验记录。
+
 # 关键决定
 
 只改 `boundary-pattern` 的页面结构和样式，不改 `family-origin-pattern` 与 `attachment-pattern` 的测试配置、入口和素材。
