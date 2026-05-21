@@ -88,7 +88,7 @@ test("static app registers boundary direct link and preview skin", async () => {
   assert.match(css, /\.boundary-lines-preview/);
   assert.match(css, /\.boundary-report-image/);
   assert.match(css, /\.boundary-report-copy/);
-  assert.match(css, /\.boundary-thread-note/);
+  assert.match(css, /\.boundary-proof-tags/);
   assert.match(css, /\.boundary-theme/);
 });
 
