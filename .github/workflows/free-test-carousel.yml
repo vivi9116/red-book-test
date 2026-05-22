@@ -1,6 +1,6 @@
 name: Generate Free Test Carousel
 
-# Regeneration trigger: 2026-05-20 03:03 preference q4 wording retry
+# Regeneration trigger: 2026-05-22 active withdrawn free test
 on:
   push:
     branches:
@@ -14,7 +14,7 @@ on:
       test_id:
         description: "Free test id"
         required: false
-        default: "preference-vs-understanding-like"
+        default: "active-vs-withdrawn-like"
 
 permissions:
   contents: write
